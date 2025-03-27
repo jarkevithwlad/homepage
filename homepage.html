@@ -98,6 +98,22 @@
         .button:hover {
             background-color: #333333;
         }
+
+        #google-search
+        {
+          width: 70%;
+          border-radius: 20px;
+          height: 50px;
+          margin-bottom: 100px;
+          padding: 10px 20px;
+          z-index: 1000;
+          background-color: #1f1f1f;
+          color: #ffffff;
+          font-size: 20px;
+          border: 2px solid #333;
+          max-width: 1000px;
+        }
+
     </style>
 </head>
 <body>
@@ -227,24 +243,18 @@
 
     /* ---- stats.js config ---- */
     var count_particles, stats, update;
-    stats = new Stats;
-    stats.setMode(0);
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left = '0px';
-    stats.domElement.style.top = '0px';
-    document.body.appendChild(stats.domElement);
     count_particles = document.querySelector('.js-count-particles');
     update = function() {
-      stats.begin();
-      stats.end();
-      if (window.pJSDom[0].pJS.particles && window.pJSDom[0].pJS.particles.array) {
-        count_particles.innerText = window.pJSDom[0].pJS.particles.array.length;
-      }
       requestAnimationFrame(update);
     };
     requestAnimationFrame(update);
+
   </script>
   
+
+  <input type="search" id="google-search" placeholder="Google" autofocus/>
+
+
     <div class="button-container">
         <a href="https://www.youtube.com/" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
             <img style="position: absolute; top: 0px; left: -4px; width: 160px; height: 90px;" 
@@ -295,5 +305,33 @@
             <span></span>
         </a>
     </div>
+
+    <script>
+          var googleSearch = document.getElementById("google-search");
+    googleSearch.addEventListener("keydown", searchGoogle);
+
+    function searchGoogle(event) {
+            if (event.key === 'Enter') {
+                const query = event.target.value;
+                const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                window.location.href = googleSearchUrl;
+            }
+          }
+
+          function focusEvent(event)
+          {
+            if(googleSearch != document.activeElement){
+            googleSearch.focus();
+            }
+          }
+
+          document.addEventListener("keydown", focusEvent);
+            
+
+
+
+
+
+    </script>
 </body>
 </html>
