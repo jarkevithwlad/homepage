@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <style>
-        body {
-            background-color: #121212; /* Тёмный фон */
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            height: 100vh;
-            margin: 0;
-        }
 
-        canvas {
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <style>
+    body {
+      background-color: #121212;
+      /* Тёмный фон */
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+
+    canvas {
       display: block;
       vertical-align: bottom;
     }
@@ -69,56 +71,62 @@
       border-radius: 0 0 3px 3px;
     }
 
-        .button-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px; /* Расстояние между кнопками */
-            max-width: 1000px; /* Максимальная ширина */
-        }
-        .button {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #1f1f1f; /* Цвет кнопки */
-            border: 2px solid #333333;
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            width: 130px;
-            height: 100px;
-        }
-        .button img {
-            margin-bottom: 8px;
-        }
-        .button span {
-            font-size: 14px;
-        }
-        .button:hover {
-            background-color: #333333;
-        }
+    .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      /* Расстояние между кнопками */
+      max-width: 1000px;
+      /* Максимальная ширина */
+    }
 
-        #google-search
-        {
-          width: 70%;
-          border-radius: 20px;
-          height: 50px;
-          margin-bottom: 100px;
-          padding: 10px 20px;
-          z-index: 1000;
-          background-color: #1f1f1f;
-          color: #ffffff;
-          font-size: 20px;
-          border: 2px solid #333;
-          max-width: 1000px;
-        }
+    .button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #1f1f1f;
+      /* Цвет кнопки */
+      border: 2px solid #333333;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      width: 130px;
+      height: 100px;
+    }
 
-    </style>
+    .button img {
+      margin-bottom: 8px;
+    }
+
+    .button span {
+      font-size: 14px;
+    }
+
+    .button:hover {
+      background-color: #333333;
+    }
+
+    #google-search {
+      width: 70%;
+      border-radius: 20px;
+      height: 50px;
+      margin-bottom: 100px;
+      padding: 10px 20px;
+      z-index: 1000;
+      background-color: #1f1f1f;
+      color: #ffffff;
+      font-size: 20px;
+      border: 2px solid #333;
+      max-width: 1000px;
+    }
+  </style>
 </head>
+
 <body>
 
-    <!-- particles.js container -->
+  <!-- particles.js container -->
   <div id="particles-js"></div>
 
   <!-- stats - count particles -->
@@ -244,96 +252,106 @@
     /* ---- stats.js config ---- */
     var count_particles, stats, update;
     count_particles = document.querySelector('.js-count-particles');
-    update = function() {
+    update = function () {
       requestAnimationFrame(update);
     };
     requestAnimationFrame(update);
 
   </script>
-  
-
-  <input type="search" id="google-search" placeholder="Google" autofocus/>
 
 
-    <div class="button-container">
-        <a href="https://www.youtube.com/" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img style="position: absolute; top: 0px; left: -4px; width: 160px; height: 90px;" 
-                 src="youtube_logo.png" alt="Icon 1">
-            <span style="position: absolute; top: 90px; left: 50px;">YouTube</span>
-        </a>
-        <a href="https://www.google.com/" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <svg style="position: absolute; top: 0px; left: 11px; width: 130px; height: 90px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 30">
-                <path d="M38.9 15.51c0 4.26-3.32 7.39-7.4 7.39s-7.4-3.14-7.4-7.39c0-4.28 3.32-7.39 7.4-7.39s7.4 3.1 7.4 7.39zm-3.24 0c0-2.66-1.93-4.48-4.16-4.48-2.23 0-4.16 1.82-4.16 4.48 0 2.63 1.93 4.48 4.16 4.48 2.23 0 4.16-1.85 4.16-4.48zm-23.7 7.47C5.63 22.98.31 17.83.31 11.5S5.63.02 11.96.02c3.5 0 5.99 1.37 7.87 3.16L17.62 5.4c-1.34-1.26-3.16-2.24-5.66-2.24-4.62 0-8.23 3.72-8.23 8.34 0 4.62 3.61 8.34 8.23 8.34 3 0 4.7-1.2 5.79-2.3.9-.9 1.49-2.2 1.74-4.17H12v-3.14h10.52c.11.56.17 1.23.17 1.96 0 2.35-.64 5.49-2.72 7.56-2.02 2.11-4.59 3.23-8.01 3.23zm42.94-7.47c0 4.26-3.32 7.39-7.4 7.39s-7.4-3.14-7.4-7.39c0-4.28 3.32-7.39 7.4-7.39s7.4 3.1 7.4 7.39zm-3.24 0c0-2.66-1.93-4.48-4.16-4.48-2.23 0-4.16 1.82-4.16 4.48 0 2.63 1.93 4.48 4.16 4.48 2.23 0 4.16-1.85 4.16-4.48zM70 8.56v13.27c0 5.46-3.05 7.7-6.86 7.7-3.58 0-5.74-2.41-6.55-4.37l2.83-1.18c.5 1.2 1.74 2.63 3.72 2.63 2.44 0 3.78-1.51 3.78-4.34v-1.06h-.11c-.73.9-2.04 1.68-3.81 1.68-3.7 0-7-3.22-7-7.36 0-4.17 3.3-7.42 7-7.42 1.76 0 3.08.78 3.81 1.65h.11v-1.2H70zm-2.86 6.97c0-2.6-1.74-4.51-3.95-4.51-2.24 0-3.95 1.9-3.95 4.51 0 2.58 1.71 4.45 3.95 4.45 2.22.01 3.95-1.87 3.95-4.45zM75 1.17V22.9h-3V1.17h3zm12.5 16.77l2.48 1.68c-.8 1.2-2.73 3.28-6.06 3.28-4.13 0-7.22-3.25-7.22-7.39 0-4.4 3.11-7.39 6.86-7.39 3.78 0 5.62 3.05 6.23 4.7l.31.85-9.71 4.08c.74 1.48 1.9 2.24 3.53 2.24s2.76-.82 3.58-2.05zm-7.63-2.66l6.5-2.74c-.36-.92-1.43-1.57-2.7-1.57-1.62 0-3.88 1.46-3.8 4.31z" fill="#FFF"></path>
-            </svg>
-            <span style="position: absolute; top: 90px; left: 52px;">Google</span>
-        </a>
-        <a href="https://www.gmail.com/" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img style="position: absolute; top: 15px; left: 13px; width: 140px; height: 60px;" 
-                 src="gmail_logo.png" alt="Icon 1">
-            <span style="position: absolute; top: 90px; left: 56px;">Gmail</span>
-        </a>
-        <a href="https://www.4pda.to/" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img style="position: absolute; top: 20px; left: 5px; width: 140px; height: 45px;" 
-                                  src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' viewBox='0 -154 1024 1024'><defs><linearGradient id='b' x1='122' x2='122' y1='-40' y2='720' gradientTransform='matrix(1.373 0 0 1.347 -167.5 -100.1)' gradientUnits='userSpaceOnUse'><stop stop-color='%234371c1' offset='0'/><stop stop-color='%232d4f8c' offset='1'/></linearGradient><linearGradient id='a' x1='983.1' x2='983.1' y1='25' y2='999' gradientTransform='matrix(1.096 0 0 1.05 -54.28 -179.7)' gradientUnits='userSpaceOnUse'><stop stop-color='%23fff' offset='0'/><stop stop-color='%2391b6f7' offset='1'/></linearGradient><filter id='c' x='-.09375' y='-.09375' width='1.207' height='1.207' color-interpolation-filters='sRGB'><feFlood flood-color='rgb(0,0,0)' flood-opacity='.7333' result='flood'/><feComposite in='flood' in2='SourceGraphic' operator='in' result='composite1'/><feGaussianBlur in='composite1' result='blur' stdDeviation='40'/><feOffset dx='20' dy='20' result='offset'/><feComposite in='SourceGraphic' in2='offset' result='composite2'/></filter></defs><rect y='-154' width='1024' height='1024' fill='url(%23b)' fill-rule='evenodd' style='paint-order:markers fill stroke'/><path d='m402-154-402 555v317h623v152h401v-1024zm222 256v340h-268z' fill='url(%23a)' fill-rule='evenodd' filter='url(%23c)'/></svg>" />
-            <span style="position: absolute; top: 90px; left: 56px;">4PDA</span>
-        </a>
-        <a href="https://www.habr.com/" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img style="position: absolute; top: 20px; left: 25px; width: 100px; height: 45px;" 
-                 src="habr-pill.svg" alt="Icon 1">
-            <span style="position: absolute; top: 90px; left: 60px;">Habr</span>
-        </a>
-        <a href="https://www.instagram.com/" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;" 
-                 src="inst_logo.png" alt="Icon 1">
-            <span style="position: absolute; top: 90px; left: 45px;">Instagram</span>
-        </a>
-        <a href="https://translate.google.com/?hl=ru&tab=TT&sl=en&tl=ru&op=translate" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;" 
-                 src="GTransl_logo.svg" alt="Icon 1">
-            <span style="position: absolute; top: 90px; left: 40px;">Переводчик</span>
-        </a>
-        <a href="https://rutracker.org" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img src="">
-            <span>RuTracker</span>
-        </a>
-        <a href="https://onliner.by" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <img src="">
-            <span>Onliner</span>
-        </a>
-        <a href="https://github.com/jarkevithwlad" class="button" style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
-            <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 0 24 24" version="1.1" width="32">
-                <path fill="white" d="M12 1C5.9225 1 1 5.9225 1 12C1 16.8675 4.14875 20.9787 8.52125 22.4362C9.07125 22.5325 9.2775 22.2025 9.2775 21.9137C9.2775 21.6525 9.26375 20.7862 9.26375 19.865C6.5 20.3737 5.785 19.1912 5.565 18.5725C5.44125 18.2562 4.905 17.28 4.4375 17.0187C4.0525 16.8125 3.5025 16.3037 4.42375 16.29C5.29 16.2762 5.90875 17.0875 6.115 17.4175C7.105 19.0812 8.68625 18.6137 9.31875 18.325C9.415 17.61 9.70375 17.1287 10.02 16.8537C7.5725 16.5787 5.015 15.63 5.015 11.4225C5.015 10.2262 5.44125 9.23625 6.1425 8.46625C6.0325 8.19125 5.6475 7.06375 6.2525 5.55125C6.2525 5.55125 7.17375 5.2625 9.2775 6.67875C10.1575 6.43125 11.0925 6.3075 12.0275 6.3075C12.9625 6.3075 13.8975 6.43125 14.7775 6.67875C16.8813 5.24875 17.8025 5.55125 17.8025 5.55125C18.4075 7.06375 18.0225 8.19125 17.9125 8.46625C18.6138 9.23625 19.04 10.2125 19.04 11.4225C19.04 15.6437 16.4688 16.5787 14.0213 16.8537C14.42 17.1975 14.7638 17.8575 14.7638 18.8887C14.7638 20.36 14.75 21.5425 14.75 21.9137C14.75 22.2025 14.9563 22.5462 15.5063 22.4362C19.8513 20.9787 23 16.8537 23 12C23 5.9225 18.0775 1 12 1Z"></path>
-            </svg>
-            <span>GitHub</span>
-        </a>
-    </div>
+  <input type="search" id="google-search" placeholder="Google" autofocus />
 
-    <script>
-          var googleSearch = document.getElementById("google-search");
+
+  <div class="button-container">
+    <a href="https://www.youtube.com/" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img style="position: absolute; top: 0px; left: -4px; width: 160px; height: 90px;" src="youtube_logo.png"
+        alt="Icon 1">
+      <span style="position: absolute; top: 90px; left: 50px;">YouTube</span>
+    </a>
+    <a href="https://www.google.com/" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <svg style="position: absolute; top: 0px; left: 11px; width: 130px; height: 90px;"
+        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 30">
+        <path
+          d="M38.9 15.51c0 4.26-3.32 7.39-7.4 7.39s-7.4-3.14-7.4-7.39c0-4.28 3.32-7.39 7.4-7.39s7.4 3.1 7.4 7.39zm-3.24 0c0-2.66-1.93-4.48-4.16-4.48-2.23 0-4.16 1.82-4.16 4.48 0 2.63 1.93 4.48 4.16 4.48 2.23 0 4.16-1.85 4.16-4.48zm-23.7 7.47C5.63 22.98.31 17.83.31 11.5S5.63.02 11.96.02c3.5 0 5.99 1.37 7.87 3.16L17.62 5.4c-1.34-1.26-3.16-2.24-5.66-2.24-4.62 0-8.23 3.72-8.23 8.34 0 4.62 3.61 8.34 8.23 8.34 3 0 4.7-1.2 5.79-2.3.9-.9 1.49-2.2 1.74-4.17H12v-3.14h10.52c.11.56.17 1.23.17 1.96 0 2.35-.64 5.49-2.72 7.56-2.02 2.11-4.59 3.23-8.01 3.23zm42.94-7.47c0 4.26-3.32 7.39-7.4 7.39s-7.4-3.14-7.4-7.39c0-4.28 3.32-7.39 7.4-7.39s7.4 3.1 7.4 7.39zm-3.24 0c0-2.66-1.93-4.48-4.16-4.48-2.23 0-4.16 1.82-4.16 4.48 0 2.63 1.93 4.48 4.16 4.48 2.23 0 4.16-1.85 4.16-4.48zM70 8.56v13.27c0 5.46-3.05 7.7-6.86 7.7-3.58 0-5.74-2.41-6.55-4.37l2.83-1.18c.5 1.2 1.74 2.63 3.72 2.63 2.44 0 3.78-1.51 3.78-4.34v-1.06h-.11c-.73.9-2.04 1.68-3.81 1.68-3.7 0-7-3.22-7-7.36 0-4.17 3.3-7.42 7-7.42 1.76 0 3.08.78 3.81 1.65h.11v-1.2H70zm-2.86 6.97c0-2.6-1.74-4.51-3.95-4.51-2.24 0-3.95 1.9-3.95 4.51 0 2.58 1.71 4.45 3.95 4.45 2.22.01 3.95-1.87 3.95-4.45zM75 1.17V22.9h-3V1.17h3zm12.5 16.77l2.48 1.68c-.8 1.2-2.73 3.28-6.06 3.28-4.13 0-7.22-3.25-7.22-7.39 0-4.4 3.11-7.39 6.86-7.39 3.78 0 5.62 3.05 6.23 4.7l.31.85-9.71 4.08c.74 1.48 1.9 2.24 3.53 2.24s2.76-.82 3.58-2.05zm-7.63-2.66l6.5-2.74c-.36-.92-1.43-1.57-2.7-1.57-1.62 0-3.88 1.46-3.8 4.31z"
+          fill="#FFF"></path>
+      </svg>
+      <span style="position: absolute; top: 90px; left: 52px;">Google</span>
+    </a>
+    <a href="https://www.gmail.com/" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img style="position: absolute; top: 15px; left: 13px; width: 140px; height: 60px;" src="gmail_logo.png"
+        alt="Icon 1">
+      <span style="position: absolute; top: 90px; left: 56px;">Gmail</span>
+    </a>
+    <a href="https://www.4pda.to/" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img style="position: absolute; top: 20px; left: 5px; width: 140px; height: 45px;"
+        src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' viewBox='0 -154 1024 1024'><defs><linearGradient id='b' x1='122' x2='122' y1='-40' y2='720' gradientTransform='matrix(1.373 0 0 1.347 -167.5 -100.1)' gradientUnits='userSpaceOnUse'><stop stop-color='%234371c1' offset='0'/><stop stop-color='%232d4f8c' offset='1'/></linearGradient><linearGradient id='a' x1='983.1' x2='983.1' y1='25' y2='999' gradientTransform='matrix(1.096 0 0 1.05 -54.28 -179.7)' gradientUnits='userSpaceOnUse'><stop stop-color='%23fff' offset='0'/><stop stop-color='%2391b6f7' offset='1'/></linearGradient><filter id='c' x='-.09375' y='-.09375' width='1.207' height='1.207' color-interpolation-filters='sRGB'><feFlood flood-color='rgb(0,0,0)' flood-opacity='.7333' result='flood'/><feComposite in='flood' in2='SourceGraphic' operator='in' result='composite1'/><feGaussianBlur in='composite1' result='blur' stdDeviation='40'/><feOffset dx='20' dy='20' result='offset'/><feComposite in='SourceGraphic' in2='offset' result='composite2'/></filter></defs><rect y='-154' width='1024' height='1024' fill='url(%23b)' fill-rule='evenodd' style='paint-order:markers fill stroke'/><path d='m402-154-402 555v317h623v152h401v-1024zm222 256v340h-268z' fill='url(%23a)' fill-rule='evenodd' filter='url(%23c)'/></svg>" />
+      <span style="position: absolute; top: 90px; left: 56px;">4PDA</span>
+    </a>
+    <a href="https://www.habr.com/" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img style="position: absolute; top: 20px; left: 25px; width: 100px; height: 45px;" src="habr-pill.svg"
+        alt="Icon 1">
+      <span style="position: absolute; top: 90px; left: 60px;">Habr</span>
+    </a>
+    <a href="https://www.instagram.com/" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;" src="inst_logo.png"
+        alt="Icon 1">
+      <span style="position: absolute; top: 90px; left: 45px;">Instagram</span>
+    </a>
+    <a href="https://translate.google.com/?hl=ru&tab=TT&sl=en&tl=ru&op=translate" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;" src="GTransl_logo.svg"
+        alt="Icon 1">
+      <span style="position: absolute; top: 90px; left: 40px;">Переводчик</span>
+    </a>
+    <a href="https://rutracker.org" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img src="">
+      <span>RuTracker</span>
+    </a>
+    <a href="https://onliner.by" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <img src="">
+      <span>Onliner</span>
+    </a>
+    <a href="https://github.com/jarkevithwlad" class="button"
+      style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+      <svg xmlns="http://www.w3.org/2000/svg" height="50" viewBox="0 0 24 24" version="1.1" width="50"
+        style="margin-top: 10px;">
+        <path margin-top: 10px; fill="white"
+          d="M12 1C5.9225 1 1 5.9225 1 12C1 16.8675 4.14875 20.9787 8.52125 22.4362C9.07125 22.5325 9.2775 22.2025 9.2775 21.9137C9.2775 21.6525 9.26375 20.7862 9.26375 19.865C6.5 20.3737 5.785 19.1912 5.565 18.5725C5.44125 18.2562 4.905 17.28 4.4375 17.0187C4.0525 16.8125 3.5025 16.3037 4.42375 16.29C5.29 16.2762 5.90875 17.0875 6.115 17.4175C7.105 19.0812 8.68625 18.6137 9.31875 18.325C9.415 17.61 9.70375 17.1287 10.02 16.8537C7.5725 16.5787 5.015 15.63 5.015 11.4225C5.015 10.2262 5.44125 9.23625 6.1425 8.46625C6.0325 8.19125 5.6475 7.06375 6.2525 5.55125C6.2525 5.55125 7.17375 5.2625 9.2775 6.67875C10.1575 6.43125 11.0925 6.3075 12.0275 6.3075C12.9625 6.3075 13.8975 6.43125 14.7775 6.67875C16.8813 5.24875 17.8025 5.55125 17.8025 5.55125C18.4075 7.06375 18.0225 8.19125 17.9125 8.46625C18.6138 9.23625 19.04 10.2125 19.04 11.4225C19.04 15.6437 16.4688 16.5787 14.0213 16.8537C14.42 17.1975 14.7638 17.8575 14.7638 18.8887C14.7638 20.36 14.75 21.5425 14.75 21.9137C14.75 22.2025 14.9563 22.5462 15.5063 22.4362C19.8513 20.9787 23 16.8537 23 12C23 5.9225 18.0775 1 12 1Z">
+        </path>
+      </svg>
+      <span style="position: absolute; top: 90px; left: 53px;">GitHub</span>
+    </a>
+  </div>
+
+  <script>
+    var googleSearch = document.getElementById("google-search");
     googleSearch.addEventListener("keydown", searchGoogle);
 
     function searchGoogle(event) {
-            if (event.key === 'Enter') {
-                const query = event.target.value;
-                const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                window.location.href = googleSearchUrl;
-            }
-          }
+      if (event.key === 'Enter') {
+        const query = event.target.value;
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        window.location.href = googleSearchUrl;
+      }
+    }
 
-          function focusEvent(event)
-          {
-            if(googleSearch != document.activeElement){
-            googleSearch.focus();
-            }
-          }
+    function focusEvent(event) {
+      if (googleSearch != document.activeElement) {
+        googleSearch.focus();
+      }
+    }
 
-          document.addEventListener("keydown", focusEvent);
-            
-
-
-
-
-
-    </script>
+    document.addEventListener("keydown", focusEvent);
+  </script>
 </body>
+
 </html>
