@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background-color: #0f0f0f;
+      z-index: 1;
+    }
+
+    #main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      max-width: 1000px;
+    }
+
+    .button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #1f1f1f;
+      border: 2px solid #333333;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      width: 130px;
+      height: 100px;
+    }
+
+    .button img {
+      margin-bottom: 8px;
+    }
+
+    .button span {
+      font-size: 14px;
+    }
+
+    .button:hover {
+      background-color: #333333;
+    }
+
+    #google-search {
+      width: 70%;
+      border-radius: 20px;
+      height: 50px;
+      margin-bottom: 100px;
+      padding: 10px 20px;
+      background-color: #1f1f1f;
+      color: #ffffff;
+      font-size: 20px;
+      border: 2px solid #333;
+      max-width: 1000px;
+    }
+
+    /* --- ОБЩИЕ СТИЛИ ДЛЯ ВИДЖЕТОВ --- */
+    .widget-base {
+      position: absolute;
+      /* Позиция будет управляться через JS */
+      z-index: 10;
+      backdrop-filter: blur(5px);
+      width: 329px;
+      height: 411px;
+      background: rgb(4 4 4 / 40%);
+      border-radius: 16px;
+      color: #ffffff;
+      padding: 16px 18px 8px 18px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      user-select: none;
+      outline: none !important;
+      box-shadow: none !important;
+      border: 1.6px solid #ffffff33;
+      /* --- ИЗМЕНЕНИЯ ДЛЯ УСТРАНЕНИЯ МЕРЦАНИЯ --- */
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .mcwx-root {
+      cursor: pointer;
+    }
+
+    .mcwx-root:focus,
+    .mcwx-root:active {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .mcwx-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+
+    .mcwx-city {
+      font-size: 21px;
+      font-weight: 500;
+      line-height: 1.12;
+    }
+
+    .mcwx-desc {
+      font-size: 13.6px;
+      color: #fff;
+      opacity: .81;
+      text-align: right;
+      font-weight: 400;
+    }
+
+    .mcwx-trow {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 7px;
+    }
+
+    .mcwx-top-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    #main-icon-container {
+      margin-bottom: 2px;
+    }
+
+    .mcwx-temp {
+      font-size: 60px;
+      line-height: 1.06;
+      font-weight: 300;
+      letter-spacing: -2px;
+    }
+
+    .mcwx-range {
+      font-size: 13.1px;
+      color: #fff;
+      opacity: .7;
+      text-align: right;
+      font-weight: 400;
+    }
+
+    .mcwx-hours {
+      flex-grow: 1;
+      min-height: 100px;
+      margin: 6px 0 10px 0;
+      border-top: .5px solid #fff4;
+      border-bottom: .5px solid #fff4;
+      box-sizing: border-box;
+      display: flex;
+      align-items: stretch;
+      gap: 4px;
+      padding: 5px 0;
+      overflow: hidden;
+    }
+
+    .mcwx-chart-y-labels {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 19px;
+      height: 111px;
+      text-align: right;
+      font-size: 11px;
+      opacity: 0.8;
+      padding: 2px 0;
+      box-sizing: border-box;
+    }
+
+    #chart-min-temp {
+      color: #ffffff;
+      left: 15px;
+      top: 16px;
+      position: relative;
+    }
+
+    .mcwx-chart-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      transform: scale(1.06, 1);
+      right: 14px;
+      position: relative;
+    }
+
+    #chart-svg-container {
+      flex: 1;
+      min-height: 0;
+    }
+
+    #chart-time-labels {
+      display: flex;
+      justify-content: space-between;
+      height: 12px;
+      font-size: 11px;
+      opacity: 0.8;
+      padding-top: 3px;
+    }
+
+    .mcwx-week-row {
+      display: flex;
+      align-items: center;
+      margin: 0 0 4px 0;
+      justify-content: space-between;
+      font-size: 13.2px;
+      color: #fff;
+      min-height: 23px;
+    }
+
+    .mcwx-wday {
+      width: 26px;
+    }
+
+    .mcwx-wico {
+      width: 20px;
+      height: 20px;
+    }
+
+    .mcwx-barbox {
+      flex: 1;
+      margin: 0 8px;
+      height: 5px;
+      background: #fff2;
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mcwx-bar {
+      height: 5px;
+      border-radius: 3px;
+      background: #fff;
+      opacity: .8;
+      position: absolute;
+      top: 0;
+      transition: .2s;
+    }
+
+    .mcwx-mn {
+      color: #fff;
+      opacity: .6;
+      width: 22px;
+      text-align: right;
+    }
+
+    .mcwx-mx {
+      color: #fff;
+      width: 22px;
+      text-align: left;
+    }
+
+    .mcsun {
+      animation: msun 13s linear infinite;
+    }
+
+    @keyframes msun {
+      0% {
+        transform: rotate(0);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .mcsnow {
+      animation: mcsnow 2s linear infinite;
+    }
+
+    @keyframes mcsnow {
+      0% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      94% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(8px);
+        opacity: 0;
+      }
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translate(4px, -15px);
+        opacity: 0;
+      }
+
+      30% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-8px, 20px);
+        opacity: 0;
+      }
+    }
+
+    .raindrop {
+      animation: fall 1.4s infinite linear;
+    }
+
+    @keyframes mcwind {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-20px);
+      }
+    }
+
+    .mcwind-g {
+      animation: mcwind 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes mcflash {
+
+      0%,
+      100% {
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .mcflash {
+      animation: mcflash 1.5s infinite;
+    }
+
+    #coordform {
+      position: absolute;
+      z-index: 20;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 10, 0.99);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      border-radius: 16px;
+    }
+
+    #coordform label {
+      color: #fff;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    #coordform input {
+      border: none;
+      padding: 7px 11px;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      background: #222;
+      color: #fff;
+      width: 120px;
+    }
+
+    /* СТИЛИ ГЕНЕРАТОРА ПАРОЛЕЙ */
+    #password-generator-widget {
+      padding: 10px 20px;
+    }
+
+    #password-generator-widget main {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+    }
+
+    #password-generator-widget label {
+      display: block;
+      margin-top: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    #password-generator-widget input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    #password-generator-widget .slider-wrapper {
+      position: relative;
+      width: 100%;
+      margin: 15px 0;
+    }
+
+    #password-generator-widget input[type=range] {
+      width: 100%;
+    }
+
+    #password-generator-widget .range-value {
+      background: #3e3e3e;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    #password-generator-widget textarea {
+      width: 100%;
+      height: 110px;
+      margin-top: 15px;
+      background: #1e1e1e;
+      color: #cfcfcf;
+      border: none;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 1.2rem;
+      resize: none;
+      box-sizing: border-box;
+    }
+
+    #password-generator-widget textarea::placeholder {
+      color: #555;
+    }
+
+    #password-generator-widget footer {
+      text-align: center;
+      font-size: .7rem;
+      margin: 8px 0;
+      color: #aaa;
+    }
+
+    #password-generator-widget .button-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    #password-generator-widget .btn-item {
+      flex: 1;
+      text-align: center;
+      position: relative;
+      margin: 0 1px;
+    }
+
+    #password-generator-widget .btn-item button {
+      background: #3e3e3e;
+      border: none;
+      color: white;
+      padding: 6px 0;
+      font-size: .7rem;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+      width: 100%;
+      height: 30px;
+      border-radius: 4px;
+    }
+
+    #password-generator-widget .btn-item button.active {
+      background: #2196f3;
+    }
+
+    #password-generator-widget .btn-item button:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="particles-js"></div>
+
+  <div id="main-content">
+    <input type="search" id="google-search" placeholder="Google" autocomplete="on" autofocus />
+    <div class="button-container">
+      <a href="https://www.youtube.com/" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 0px; left: -4px; width: 160px; height: 90px;" src="youtube_logo.png"
+          alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 50px;">YouTube</span>
+      </a>
+      <a href="https://www.google.com/" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <svg style="position: absolute; top: 0px; left: 11px; width: 130px; height: 90px;"
+          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 30">
+          <path
+            d="M38.9 15.51c0 4.26-3.32 7.39-7.4 7.39s-7.4-3.14-7.4-7.39c0-4.28 3.32-7.39 7.4-7.39s7.4 3.1 7.4 7.39zm-3.24 0c0-2.66-1.93-4.48-4.16-4.48-2.23 0-4.16 1.82-4.16 4.48 0 2.63 1.93 4.48 4.16 4.48 2.23 0 4.16-1.85 4.16-4.48zm-23.7 7.47C5.63 22.98.31 17.83.31 11.5S5.63.02 11.96.02c3.5 0 5.99 1.37 7.87 3.16L17.62 5.4c-1.34-1.26-3.16-2.24-5.66-2.24-4.62 0-8.23 3.72-8.23 8.34 0 4.62 3.61 8.34 8.23 8.34 3 0 4.7-1.2 5.79-2.3.9-.9 1.49-2.2 1.74-4.17H12v-3.14h10.52c.11.56.17 1.23.17 1.96 0 2.35-.64 5.49-2.72 7.56-2.02 2.11-4.59 3.23-8.01 3.23zm42.94-7.47c0 4.26-3.32 7.39-7.4 7.39s-7.4-3.14-7.4-7.39c0-4.28 3.32-7.39 7.4-7.39s7.4 3.1 7.4 7.39zm-3.24 0c0-2.66-1.93-4.48-4.16-4.48-2.23 0-4.16 1.82-4.16 4.48 0 2.63 1.93 4.48 4.16 4.48 2.23 0 4.16-1.85 4.16-4.48zM70 8.56v13.27c0 5.46-3.05 7.7-6.86 7.7-3.58 0-5.74-2.41-6.55-4.37l2.83-1.18c.5 1.2 1.74 2.63 3.72 2.63 2.44 0 3.78-1.51 3.78-4.34v-1.06h-.11c-.73.9-2.04 1.68-3.81 1.68-3.7 0-7-3.22-7-7.36 0-4.17 3.3-7.42 7-7.42 1.76 0 3.08.78 3.81 1.65h.11v-1.2H70zm-2.86 6.97c0-2.6-1.74-4.51-3.95-4.51-2.24 0-3.95 1.9-3.95 4.51 0 2.58 1.71 4.45 3.95 4.45 2.22.01 3.95-1.87 3.95-4.45zM75 1.17V22.9h-3V1.17h3zm12.5 16.77l2.48 1.68c-.8 1.2-2.73 3.28-6.06 3.28-4.13 0-7.22-3.25-7.22-7.39 0-4.4 3.11-7.39 6.86-7.39 3.78 0 5.62 3.05 6.23 4.7l.31.85-9.71 4.08c.74 1.48 1.9 2.24 3.53 2.24s2.76-.82 3.58-2.05zm-7.63-2.66l6.5-2.74c-.36-.92-1.43-1.57-2.7-1.57-1.62 0-3.88 1.46-3.8 4.31z"
+            fill="#FFF"></path>
+        </svg>
+        <span style="position: absolute; top: 90px; left: 52px;">Google</span>
+      </a>
+      <a href="https://www.gmail.com/" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 15px; left: 13px; width: 140px; height: 60px;" src="gmail_logo.png"
+          alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 56px;">Gmail</span>
+      </a>
+      <a href="https://www.4pda.to/" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 20px; left: 5px; width: 140px; height: 45px;"
+          src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' viewBox='0 -154 1024 1024'><defs><linearGradient id='b' x1='122' x2='122' y1='-40' y2='720' gradientTransform='matrix(1.373 0 0 1.347 -167.5 -100.1)' gradientUnits='userSpaceOnUse'><stop stop-color='%234371c1' offset='0'/><stop stop-color='%232d4f8c' offset='1'/></linearGradient><linearGradient id='a' x1='983.1' x2='983.1' y1='25' y2='999' gradientTransform='matrix(1.096 0 0 1.05 -54.28 -179.7)' gradientUnits='userSpaceOnUse'><stop stop-color='%23fff' offset='0'/><stop stop-color='%2391b6f7' offset='1'/></linearGradient><filter id='c' x='-.09375' y='-.09375' width='1.207' height='1.207' color-interpolation-filters='sRGB'><feFlood flood-color='rgb(0,0,0)' flood-opacity='.7333' result='flood'/><feComposite in='flood' in2='SourceGraphic' operator='in' result='composite1'/><feGaussianBlur in='composite1' result='blur' stdDeviation='40'/><feOffset dx='20' dy='20' result='offset'/><feComposite in='SourceGraphic' in2='offset' result='composite2'/></filter></defs><rect y='-154' width='1024' height='1024' fill='url(%23b)' fill-rule='evenodd' style='paint-order:markers fill stroke'/><path d='m402-154-402 555v317h623v152h401v-1024zm222 256v340h-268z' fill='url(%23a)' fill-rule='evenodd' filter='url(%23c)'/></svg>" />
+        <span style="position: absolute; top: 90px; left: 56px;">4PDA</span>
+      </a>
+      <a href="https://www.habr.com/" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 20px; left: 25px; width: 100px; height: 45px;" src="habr-pill.svg"
+          alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 60px;">Habr</span>
+      </a>
+      <a href="https://www.instagram.com/" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;" src="inst_logo.png"
+          alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 45px;">Instagram</span>
+      </a>
+      <a href="https://translate.google.com/?hl=ru&tab=TT&sl=en&tl=ru&op=translate" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;" src="GTransl_logo.svg"
+          alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 40px;">Переводчик</span>
+      </a>
+      <a href="https://rutracker.org" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 0px; left: 30px; width: 90px; height: 90px;"
+          src="https://upload.wikimedia.org/wikipedia/commons/d/da/Rutracker.org_logo.svg">
+        <span style="position: absolute; top: 90px; left: 43px;">RuTracker</span>
+      </a>
+      <a href="https://onliner.by" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 30px; left: 30px; width: 95px; height: 30px;"
+          src="https://gc.onliner.by/images/logo/onliner_logo.v3@2x.png?1743076579">
+        <span style="position: absolute; top: 90px; left: 53px;">Onliner</span>
+      </a>
+      <a href="https://github.com/jarkevithwlad" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <svg xmlns="http://www.w3.org/2000/svg" height="50" viewBox="0 0 24 24" version="1.1" width="50"
+          style="margin-top: 10px;">
+          <path margin-top: 10px; fill="white"
+            d="M12 1C5.9225 1 1 5.9225 1 12C1 16.8675 4.14875 20.9787 8.52125 22.4362C9.07125 22.5325 9.2775 22.2025 9.2775 21.9137C9.2775 21.6525 9.26375 20.7862 9.26375 19.865C6.5 20.3737 5.785 19.1912 5.565 18.5725C5.44125 18.2562 4.905 17.28 4.4375 17.0187C4.0525 16.8125 3.5025 16.3037 4.42375 16.29C5.29 16.2762 5.90875 17.0875 6.115 17.4175C7.105 19.0812 8.68625 18.6137 9.31875 18.325C9.415 17.61 9.70375 17.1287 10.02 16.8537C7.5725 16.5787 5.015 15.63 5.015 11.4225C5.015 10.2262 5.44125 9.23625 6.1425 8.46625C6.0325 8.19125 5.6475 7.06375 6.2525 5.55125C6.2525 5.55125 7.17375 5.2625 9.2775 6.67875C10.1575 6.43125 11.0925 6.3075 12.0275 6.3075C12.9625 6.3075 13.8975 6.43125 14.7775 6.67875C16.8813 5.24875 17.8025 5.55125 17.8025 5.55125C18.4075 7.06375 18.0225 8.19125 17.9125 8.46625C18.6138 9.23625 19.04 10.2125 19.04 11.4225C19.04 15.6437 16.4688 16.5787 14.0213 16.8537C14.42 17.1975 14.7638 17.8575 14.7638 18.8887C14.7638 20.36 14.75 21.5425 14.75 21.9137C14.75 22.2025 14.9563 22.5462 15.5063 22.4362C19.8513 20.9787 23 16.8537 23 12C23 5.9225 18.0775 1 12 1Z">
+          </path>
+        </svg>
+        <span style="position: absolute; top: 90px; left: 53px;">GitHub</span>
+      </a>
+      <a href="https://chatgpt.com" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img
+          style="position: absolute; top: 30px; left: 30px; width: 95px; height: 30px; filter: brightness(0) invert(1);"
+          src="https://upload.wikimedia.org/wikipedia/commons/e/ef/ChatGPT-Logo.svg">
+        <span style="position: absolute; top: 90px; left: 48px;">ChatGPT</span>
+      </a>
+      <a href="https://polyhaven.com/ru" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;"
+          src="https://polyhaven.com/Logo%20256.png" alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 40px;">Poly Haven</span>
+      </a>
+      <a href="https://aistudio.google.com/prompts/new_chat" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 20px; left: 50px; width: 50px; height: 50px;"
+          src="https://static.wikia.nocookie.net/logopedia/images/c/c2/Google_AI_Studio.svg" alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 22px;">AI Studio Google</span>
+      </a>
+      <a href="https://gemini.google.com/?hl=ru" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <img style="position: absolute; top: 0px; left: 25px; width: 100px; height: 100px;"
+          src="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" alt="Icon 1">
+        <span style="position: absolute; top: 90px; left: 52px;">Gemini</span>
+      </a>
+      <a href="https://www.perplexity.ai" class="button"
+        style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
+        <svg width="158" height="100" viewBox="-50 -30 700 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd"
+            d="M101.008 42L190.99 124.905V124.886V42.1913H208.506V125.276L298.891 42V136.524H336V272.866H299.005V357.035L208.506 277.525V357.948H190.99V278.836L101.11 358V272.866H64V136.524H101.008V42ZM177.785 153.826H81.5159V255.564H101.088V223.472L177.785 153.826ZM118.625 231.149V319.392L190.99 255.655V165.421L118.625 231.149ZM209.01 254.812V165.336L281.396 231.068V272.866H281.489V318.491L209.01 254.812ZM299.005 255.564H318.484V153.826H222.932L299.005 222.751V255.564ZM281.375 136.524V81.7983L221.977 136.524H281.375ZM177.921 136.524H118.524V81.7983L177.921 136.524Z"
+            fill="white" />
+        </svg>
+        <span style="position: absolute; top: 90px; left: 45px;">Perplexity</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="mcwx-root widget-base" id="widget" tabindex="0" title="Клик — ввести координаты">
+    <div class="mcwx-top">
+      <div class="mcwx-city" id="city">Город</div>
+      <div class="mcwx-desc" id="desc">Описание</div>
+    </div>
+    <div class="mcwx-trow">
+      <div class="mcwx-temp" id="temp">--°</div>
+      <div class="mcwx-top-right">
+        <div id="main-icon-container"></div>
+        <div class="mcwx-range" id="range">↓ --° ↑ --°</div>
+      </div>
+    </div>
+    <div class="mcwx-hours" id="hours-row">
+      <div class="mcwx-chart-y-labels">
+        <span id="chart-max-temp">--°</span>
+        <span id="chart-min-temp">--°</span>
+      </div>
+      <div class="mcwx-chart-main">
+        <div id="chart-svg-container"></div>
+        <div id="chart-time-labels"></div>
+      </div>
+    </div>
+    <div id="week"></div>
+    <div id="coordform" style="display:none" autocomplete="off">
+      <label>Введите координаты:</label>
+      <input id="lat" type="number" step="any" placeholder="Широта" />
+      <input id="lon" type="number" step="any" placeholder="Долгота" />
+    </div>
+  </div>
+
+  <div id="password-generator-widget" class="widget-base">
+    <main>
+      <label>
+        Длина пароля (4‑512): <span id="lenVal" class="range-value">12</span>
+        <div class="slider-wrapper">
+          <input type="range" id="lengthSlider" min="4" max="512" value="12">
+        </div>
+      </label>
+      <div class="button-group" id="presetGroup">
+        <div class="btn-item"><button data-val="4">4</button></div>
+        <div class="btn-item"><button data-val="8">8</button></div>
+        <div class="btn-item"><button data-val="12">12</button></div>
+        <div class="btn-item"><button data-val="16">16</button></div>
+        <div class="btn-item"><button data-val="24">24</button></div>
+        <div class="btn-item"><button data-val="48">48</button></div>
+        <div class="btn-item"><button data-val="64">64</button></div>
+        <div class="btn-item"><button data-val="128">128</button></div>
+        <div class="btn-item"><button data-val="256">256</button></div>
+        <div class="btn-item"><button data-val="512">512</button></div>
+      </div>
+      <label><input type="checkbox" id="lowercase" checked> Строчные буквы (a-z)</label>
+      <label><input type="checkbox" id="uppercase" checked> Заглавные буквы (A-Z)</label>
+      <label><input type="checkbox" id="numbers" checked> Цифры (0-9)</label>
+      <label><input type="checkbox" id="symbols" checked> Символы (!@#$...)</label>
+      <textarea id="pwdOutput" readonly placeholder="Нажмите, чтобы скопировать"></textarea>
+    </main>
+    <footer id="distanceFooter">Пройдено: 0 px</footer>
+    <footer style="margin-top: -5px;">© 2025 Парольный генератор</footer>
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script>
+    particlesJS("particles-js", { "particles": { "number": { "value": 150, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#111111" }, "shape": { "type": "circle", "stroke": { "width": 0, "color": "#111111" }, "polygon": { "nb_sides": 5 }, "image": { "src": "img/github.svg", "width": 100, "height": 100 } }, "opacity": { "value": 0.5, "random": false, "anim": { "enable": false, "speed": 1, "opacity_min": 0.1, "sync": false } }, "size": { "value": 3, "random": true, "anim": { "enable": false, "speed": 40, "size_min": 0.1, "sync": false } }, "line_linked": { "enable": true, "distance": 150, "color": "#999999", "opacity": 0.4, "width": 1 }, "move": { "enable": true, "speed": 3, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } } }, "interactivity": { "detect_on": "window", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 }, "repulse": { "distance": 200, "duration": 0.4 }, "push": { "particles_nb": 4 }, "remove": { "particles_nb": 2 } } }, "retina_detect": true });
+  </script>
+
+  <script>
+    // --- СКРИПТ ПОИСКА GOOGLE ---
+    var googleSearch = document.getElementById("google-search");
+    googleSearch.addEventListener("keydown", searchGoogle);
+
+    function searchGoogle(event) {
+      if (event.key === 'Enter') {
+        const query = event.target.value;
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        window.location.href = googleSearchUrl;
+      }
+    }
+  </script>
+
+  <script>
+    // --- СКРИПТ ВИДЖЕТА ПОГОДЫ (ПЕРЕРАБОТАН) ---
+    const DAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    const CODES = { 0: ["Ясно", "sun"], 1: ["Временами облачно", "new-cloud-sun"], 2: ["Малооблачно", "new-cloud-sun"], 3: ["Пасмурно", "new-cloud"], 18: ["Шквал", "wind"], 45: ["Туман", "fog"], 48: ["Изморозь", "fog"], 51: ["Морось", "light-rain"], 53: ["Морось", "light-rain"], 55: ["Сильная", "heavy-rain"], 61: ["Небольшой дождь", "light-rain"], 63: ["Дождь", "heavy-rain"], 65: ["Сильный дождь", "heavy-rain"], 80: ["Ливень", "heavy-rain"], 81: ["Сильный ливень", "heavy-rain"], 71: ["Снег", "snow"], 73: ["Снег", "snow"], 75: ["Снегопад", "snow"], 95: ["Гроза", "thunderstorm"], 96: ["Гроза с градом", "thunderstorm"], 99: ["Сильная гроза", "thunderstorm"], };
+
+    function icon(type, size = 20) {
+      const s = `width="${size}" height="${size}" style="vertical-align:middle;"`;
+      const newCloudPath = 'd="M 17 38 C 12 38, 8 30, 15 25 C 18 18, 25 15, 32 18 C 40 12, 50 15, 52 25 C 60 30, 55 38, 47 38 Z"';
+      const sunWithRays = '<circle cx="32" cy="32" r="8" fill="#fff"/><path d="M32 15 V8 M32 50 V57 M15 32 H8 M57 32 H50 M22 22 L17 17 M47 47 L52 52 M22 47 L17 52 M47 22 L52 17" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>';
+      const drop1 = '<line class="raindrop" x1="22" y1="45" x2="18" y2="55" stroke="#56C0E0" stroke-width="5" stroke-linecap="round" style="animation-delay: 0s;" />';
+      const centeredDrop1 = '<line class="raindrop" x1="26" y1="45" x2="22" y2="55" stroke="#56C0E0" stroke-width="5" stroke-linecap="round" style="animation-delay: 0s;" />';
+      const centeredDrop2 = '<line class="raindrop" x1="38" y1="45" x2="34" y2="55" stroke="#56C0E0" stroke-width="5" stroke-linecap="round" style="animation-delay: 0.5s;" />';
+      const drop3 = '<line class="raindrop" x1="46" y1="45" x2="42" y2="55" stroke="#56C0E0" stroke-width="5" stroke-linecap="round" style="animation-delay: 1s;" />';
+
+      if (type === "thunderstorm") {
+        const glowFilter = `<defs><filter id="glow"><feGaussianBlur stdDeviation="4.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+        const lightningWithGlow = `<path class="mcflash" d="M 38 25 L 28 40 L 34 40 L 24 55 L 42 38 L 36 38 Z" fill="#7DF9FF" filter="url(#glow)" />`;
+        return `<svg ${s} viewBox="0 0 64 64">${glowFilter}<path fill="#5E5E5E" ${newCloudPath}/>${drop1}${centeredDrop2}${drop3}${lightningWithGlow}</svg>`;
+      }
+      if (type === "sun") return `<svg ${s} viewBox="0 0 64 64"><g class="mcsun">${sunWithRays}</g></svg>`;
+      if (type === "new-cloud-sun") return `<svg ${s} viewBox="0 0 64 64"><g transform="translate(0, 8) scale(0.9)">${sunWithRays}</g><path fill="#E0E0E0" ${newCloudPath}/></svg>`;
+      if (type === "new-cloud") return `<svg ${s} viewBox="0 0 64 64"><path fill="#E0E0E0" ${newCloudPath}/></svg>`;
+      if (type === "light-rain") return `<svg ${s} viewBox="0 0 64 64"><path fill="#E0E0E0" ${newCloudPath}/>${centeredDrop1}${centeredDrop2}</svg>`;
+      if (type === "heavy-rain") return `<svg ${s} viewBox="0 0 64 64"><path fill="#E0E0E0" ${newCloudPath}/>${drop1}${centeredDrop2}${drop3}</svg>`;
+      if (type === "wind") return `<svg ${s} viewBox="0 0 64 64"><g class="mcwind-g"><path d="M15 35 Q 30 30, 45 35 T 75 35" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M10 48 Q 25 43, 40 48 T 70 48" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></g></svg>`;
+      if (type === "snow") return `<svg ${s} viewBox="0 0 64 64"><ellipse cx="32" cy="39" rx="17" ry="10" fill="none" stroke="#fff" stroke-width="2.2"/><circle class="mcsnow" style="animation-delay:0s" cx="28" cy="54" r="2.1" fill="#fff" opacity=".71"/><circle class="mcsnow" style="animation-delay:1s" cx="36" cy="54" r="2.1" fill="#fff" opacity=".71"/></svg>`;
+      if (type === "fog") return `<svg ${s} viewBox="0 0 64 64"><path d="M 17 44 H 47" stroke="#fff" stroke-width="4" stroke-linecap="round" /><path d="M 22 52 H 52" stroke="#fff" stroke-width="4" stroke-linecap="round" /></svg>`;
+      return `<svg ${s} viewBox="0 0 64 64"><circle cx="32" cy="32" r="14" fill="none" stroke="#fff" stroke-width="2"/></svg>`;
+    }
+
+    function apiURL(lat, lon) { const baseURL = "https://api.open-meteo.com/v1/forecast"; const params = new URLSearchParams({ latitude: lat, longitude: lon, current_weather: true, hourly: "temperature_2m,precipitation_probability,weathercode", daily: "temperature_2m_max,temperature_2m_min,weathercode", timezone: "auto" }); return `${baseURL}?${params.toString()}`; }
+    function getCityName(lat, lon, cb) { fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`).then(r => r.json()).then(j => { let city = j && j.address && (j.address.city || j.address.town || j.address.village || j.address.settlement || j.address.county || "Город"); cb(city || "Город"); }).catch(() => cb("Город")); }
+
+    function createHourlyChart(temps, precips) {
+      const svgContainer = document.getElementById('chart-svg-container');
+      if (!svgContainer) return '';
+      const width = svgContainer.clientWidth;
+      const height = svgContainer.clientHeight;
+
+      const minTemp = Math.min(...temps); const maxTemp = Math.max(...temps); const tempRange = maxTemp - minTemp || 1; const normalizeTemp = temp => height - (((temp - minTemp) / tempRange) * height); const normalizePrecip = precip => height - ((precip / 100) * height); const buildPath = (data, normalizeFunc) => { let path = `M 0,${height}`; path += ` L 0,${normalizeFunc(data[0]).toFixed(2)}`; data.forEach((d, i) => { if (i === 0) return; const x = (i / (data.length - 1)) * width; path += ` L ${x.toFixed(2)},${normalizeFunc(d).toFixed(2)}`; }); path += ` L ${width},${height} Z`; return path; }; const tempPath = buildPath(temps, normalizeTemp); const precipPath = buildPath(precips, normalizePrecip); return `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; display:block;"><path d="${precipPath}" fill="rgba(0, 188, 212, 0.5)" stroke="none" /><path d="${tempPath}" fill="rgba(255, 215, 0, 0.5)" stroke="none" /></svg>`;
+    }
+
+    function clearWidgetData(reason = "Нет данных") { document.getElementById("city").textContent = "Ошибка"; document.getElementById("temp").textContent = "!"; document.getElementById("desc").textContent = reason; document.getElementById("range").innerHTML = "↓ --° ↑ --°"; document.getElementById("main-icon-container").innerHTML = ""; document.getElementById("chart-svg-container").innerHTML = ""; document.getElementById("chart-time-labels").innerHTML = ""; document.getElementById("chart-max-temp").textContent = "--°"; document.getElementById("chart-min-temp").textContent = "--°"; document.getElementById("week").innerHTML = ""; }
+
+    function fillWidget(lat, lon, city = "Город") {
+      fetch(apiURL(lat, lon)).then(r => r.json()).then(d => {
+        if (d.error) { console.error("API Error:", d.reason); clearWidgetData(d.reason || "Неверные координаты"); return; } const { current_weather, daily, hourly } = d; let cd = current_weather.weathercode; let desc = CODES[cd]?.[0] || "—"; let mainIconType = CODES[cd]?.[1] || "new-cloud"; document.getElementById("city").textContent = city || "Город"; document.getElementById("desc").textContent = desc; document.getElementById("temp").textContent = Math.round(current_weather.temperature) + "°"; document.getElementById("range").textContent = "↓ " + Math.round(daily.temperature_2m_min[0]) + "° ↑ " + Math.round(daily.temperature_2m_max[0]) + "°"; document.getElementById("main-icon-container").innerHTML = icon(mainIconType, 44); let now = new Date(); let idx = hourly.time.findIndex(t => new Date(t) >= now); if (idx === -1) idx = 0; const hourlyTemps = hourly.temperature_2m.slice(idx, idx + 48); const hourlyPrecips = hourly.precipitation_probability.slice(idx, idx + 48); const hourlyTimes = hourly.time.slice(idx, idx + 48); if (hourlyTemps.length > 1) {
+          const minTemp48h = Math.round(Math.min(...hourlyTemps)); const maxTemp48h = Math.round(Math.max(...hourlyTemps)); document.getElementById("chart-max-temp").textContent = maxTemp48h + "°"; document.getElementById("chart-min-temp").textContent = minTemp48h + "°"; requestAnimationFrame(() => { document.getElementById("chart-svg-container").innerHTML = createHourlyChart(hourlyTemps, hourlyPrecips); }); const timeLabelsContainer = document.getElementById("chart-time-labels"); timeLabelsContainer.innerHTML = ""; const timeIntervals = [0, 6, 12, 18, 24, 30, 36, 42]; for (const offset of timeIntervals) { const span = document.createElement('span'); if (hourlyTimes[offset]) { const date = new Date(hourlyTimes[offset]); span.textContent = ("0" + date.getHours()).slice(-2); } timeLabelsContainer.appendChild(span); }
+        } else { document.getElementById("chart-svg-container").innerHTML = "<div style='text-align:center;opacity:0.7;font-size:12px;'>Нет почасовых данных</div>"; } const wmin = Math.min(...daily.temperature_2m_min), wmax = Math.max(...daily.temperature_2m_max), wspan = wmax - wmin || 1; let weekHTML = ""; for (let i = 1; i <= 5; ++i) { if (!daily.time[i]) continue; let wd = DAYS[new Date(daily.time[i]).getDay()], c = daily.weathercode[i], typi = CODES[c]?.[1] || "cloud"; let mn = Math.round(daily.temperature_2m_min[i]), mx = Math.round(daily.temperature_2m_max[i]); let left = ((mn - wmin) / wspan * 100).toFixed(1), width = ((mx - mn) / wspan * 100).toFixed(1); weekHTML += `<div class="mcwx-week-row"><span class="mcwx-wday">${wd}</span><span class="mcwx-wico">${icon(typi, 20)}</span><span class="mcwx-mn">${mn}°</span><span class="mcwx-barbox"><span class="mcwx-bar" style="margin-left:${left}%;width:${width}%;"></span></span><span class="mcwx-mx">${mx}°</span></div>`; } document.getElementById("week").innerHTML = weekHTML;
+      }).catch(error => { console.error("Fetch Error:", error); clearWidgetData("Ошибка сети"); });
+    }
+    function getStoredCoords() { try { let v = localStorage.getItem('mcwx_coords'); if (!v) return null; let j = JSON.parse(v); if (typeof j.lat !== 'number' || typeof j.lon !== 'number' || !j.city) return null; return j; } catch { return null; } }
+    function setStoredCoords(lat, lon, city) { localStorage.setItem('mcwx_coords', JSON.stringify({ lat, lon, city })); }
+    function renderWidget() { const c = getStoredCoords(); if (c) fillWidget(c.lat, c.lon, c.city); else fillWidget(53.1333, 29.2167, "Бобруйск"); }
+    
+    // --- ИСХОДНАЯ ЗАГРУЗКА ВИДЖЕТА ---
+    renderWidget();
+    
+    // --- ЛОГИКА ВЗАИМОДЕЙСТВИЯ С ФОРМОЙ КООРДИНАТ ---
+    const weatherWidgetEl = document.getElementById('widget');
+    const formEl = document.getElementById('coordform');
+    const latInput = document.getElementById("lat");
+    const lonInput = document.getElementById("lon");
+
+    // Функция, которая применяет координаты и закрывает форму
+    function applyCoordinatesAndCloseForm() {
+      // Сразу скрываем форму для отзывчивости интерфейса
+      formEl.style.display = "none";
+      weatherWidgetEl.focus();
+
+      let lat = parseFloat(latInput.value.replace(",", "."));
+      let lon = parseFloat(lonInput.value.replace(",", "."));
+
+      // Проверяем, что введены корректные числа
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        console.log("Введены некорректные координаты. Обновление отменено.");
+        // Возвращаем старое название города, если оно было
+        renderWidget();
+        return;
+      }
+      
+      // Показываем пользователю, что идет загрузка
+      document.getElementById("city").textContent = "Загрузка...";
+      clearWidgetData("Загрузка...");
+
+
+      // Получаем название города и после этого обновляем виджет
+      getCityName(lat, lon, function (cityname) {
+        setStoredCoords(lat, lon, cityname);
+        fillWidget(lat, lon, cityname);
+      });
+    }
+
+    // Открытие формы по клику на виджет
+    weatherWidgetEl.addEventListener("click", (e) => {
+        // Не открывать, если клик был по элементам управления внутри виджета
+        if (e.target.closest('input, a, button')) return;
+
+        formEl.style.display = "flex";
+        weatherWidgetEl.blur();
+        let st = getStoredCoords();
+        latInput.value = st ? st.lat : '';
+        lonInput.value = st ? st.lon : '';
+        setTimeout(() => { latInput.focus(); }, 80);
+    });
+
+    // Обработка нажатия Enter в форме
+    formEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault(); // Предотвращаем стандартное поведение формы
+        applyCoordinatesAndCloseForm();
+      }
+    });
+
+    // Закрытие и применение по клику вне формы
+    document.addEventListener("mousedown", e => {
+      if (formEl.style.display === "flex" && !formEl.contains(e.target) && e.target !== weatherWidgetEl && !weatherWidgetEl.contains(e.target)) {
+        applyCoordinatesAndCloseForm();
+      }
+    });
+
+    // Закрытие и применение по нажатию Escape
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && formEl.style.display === "flex") {
+        applyCoordinatesAndCloseForm();
+      }
+    });
+  </script>
+
+  <script>
+    // --- СКРИПТ ГЕНЕРАТОРА ПАРОЛЕЙ ---
+    (function () {
+      const CHARSETS = {
+        lowercase: 'abcdefghijklmnopqrstuvwxyz',
+        uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        numbers: '0123456789',
+        symbols: '!@#$%^&*()_+[]{}|;:,.<>?'
+      };
+      const pgWidget = document.getElementById('password-generator-widget');
+      const lengthSlider = pgWidget.querySelector('#lengthSlider');
+      const lenVal = pgWidget.querySelector('#lenVal');
+      const presetGroup = pgWidget.querySelector('#presetGroup');
+      const chkLowercase = pgWidget.querySelector('#lowercase');
+      const chkUppercase = pgWidget.querySelector('#uppercase');
+      const chkNumbers = pgWidget.querySelector('#numbers');
+      const chkSymbols = pgWidget.querySelector('#symbols');
+      const pwdOutput = pgWidget.querySelector('#pwdOutput');
+      const distanceFooter = pgWidget.querySelector('#distanceFooter');
+
+      lengthSlider.addEventListener('input', () => {
+        lenVal.textContent = lengthSlider.value;
+        presetGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        generatePasswordAndUpdate();
+      });
+
+      presetGroup.addEventListener('click', e => {
+        if (e.target.tagName !== 'BUTTON') return;
+        const val = e.target.getAttribute('data-val');
+        presetGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        if (val) {
+          lengthSlider.value = val;
+          lenVal.textContent = val;
+          generatePasswordAndUpdate();
+        }
+      });
+
+      [chkLowercase, chkUppercase, chkNumbers, chkSymbols].forEach(chk => {
+        chk.addEventListener('change', generatePasswordAndUpdate);
+      });
+
+      let lastPos = null;
+      let lastTime = null;
+      let mouseSeed = 0;
+      let totalDistance = 0;
+
+      function updateMouseEntropy(e) {
+        const now = performance.now();
+        if (lastPos && lastTime) {
+          const dx = e.clientX - lastPos.x;
+          const dy = e.clientY - lastPos.y;
+          const dt = now - lastTime;
+          const speed = Math.hypot(dx, dy) / dt;
+          let noise = ((e.clientX ^ e.clientY) << 5) + (speed * 1e6);
+          noise ^= dt;
+          mouseSeed ^= Math.floor(noise) & 0xffffffff;
+          totalDistance += Math.hypot(dx, dy);
+          distanceFooter.textContent = `Пройдено: ${Math.round(totalDistance)} px`;
+        }
+        lastPos = { x: e.clientX, y: e.clientY };
+        lastTime = now;
+      }
+
+      function generatePassword() {
+        let charset = '';
+        if (chkLowercase.checked) charset += CHARSETS.lowercase;
+        if (chkUppercase.checked) charset += CHARSETS.uppercase;
+        if (chkNumbers.checked) charset += CHARSETS.numbers;
+        if (chkSymbols.checked) charset += CHARSETS.symbols;
+        if (!charset.length) {
+          pwdOutput.placeholder = "Выберите символы";
+          return '';
+        } else {
+          pwdOutput.placeholder = "Нажмите, чтобы скопировать";
+        }
+        const len = parseInt(lengthSlider.value, 10);
+        const randomBytes = new Uint32Array(len);
+        crypto.getRandomValues(randomBytes);
+        let pwd = '';
+        for (let i = 0; i < len; i++) {
+          const idx = ((randomBytes[i] + mouseSeed) % charset.length);
+          pwd += charset.charAt(idx);
+        }
+        return pwd;
+      }
+
+      function generatePasswordAndUpdate() {
+        const pwd = generatePassword();
+        if (pwd) pwdOutput.value = pwd;
+      }
+
+      document.addEventListener('mousemove', (e) => {
+        updateMouseEntropy(e);
+        generatePasswordAndUpdate();
+      });
+
+      pwdOutput.addEventListener('click', () => {
+        if (!pwdOutput.value) return;
+        pwdOutput.select();
+        document.execCommand('copy');
+        pwdOutput.style.backgroundColor = '#2c3e50';
+        setTimeout(() => { pwdOutput.style.backgroundColor = ''; }, 300);
+      });
+
+      // Initial state
+      lenVal.textContent = lengthSlider.value;
+      presetGroup.querySelector('button[data-val="12"]').classList.add('active');
+      generatePasswordAndUpdate();
+    })();
+  </script>
+
+  <script>
+    // --- СКРИПТ УПРАВЛЕНИЯ ВИДЖЕТАМИ (ПОЗИЦИЯ И ПЕРЕМЕЩЕНИЕ, ПЕРЕРАБОТАН) ---
+    (function () {
+      const weatherWidget = document.getElementById('widget');
+      const passwordWidget = document.getElementById('password-generator-widget');
+      const coordForm = document.getElementById('coordform');
+      const mainContent = document.getElementById('main-content');
+
+      let isDragging = false;
+      let activeWidget = null;
+      let offsetX, offsetY;
+
+      function savePositions() {
+        const weatherPos = { left: weatherWidget.offsetLeft, top: weatherWidget.offsetTop };
+        localStorage.setItem('mcwx_widget_pos', JSON.stringify(weatherPos));
+
+        const passwordPos = { left: passwordWidget.offsetLeft, top: passwordWidget.offsetTop };
+        localStorage.setItem('pwd_widget_pos', JSON.stringify(passwordPos));
+      }
+
+      function loadAndPositionWidgets() {
+        const mainRect = mainContent.getBoundingClientRect();
+        const widgetWidth = 329;
+        const widgetHeight = 411;
+        const gap = 40;
+        const topPosition = mainRect.top + (mainRect.height / 2) - (widgetHeight / 2);
+
+        const weatherPosStr = localStorage.getItem('mcwx_widget_pos');
+        if (weatherPosStr) {
+          try {
+            const pos = JSON.parse(weatherPosStr);
+            weatherWidget.style.left = pos.left + 'px';
+            weatherWidget.style.top = pos.top + 'px';
+          } catch (e) {
+             weatherWidget.style.left = (mainRect.right + gap) + 'px';
+             weatherWidget.style.top = topPosition + 'px';
+          }
+        } else {
+          weatherWidget.style.left = (mainRect.right + gap) + 'px';
+          weatherWidget.style.top = topPosition + 'px';
+        }
+
+        const passwordPosStr = localStorage.getItem('pwd_widget_pos');
+        if (passwordPosStr) {
+          try {
+            const pos = JSON.parse(passwordPosStr);
+            passwordWidget.style.left = pos.left + 'px';
+            passwordWidget.style.top = pos.top + 'px';
+          } catch (e) {
+            passwordWidget.style.left = (mainRect.left - widgetWidth - gap) + 'px';
+            passwordWidget.style.top = topPosition + 'px';
+          }
+        } else {
+          passwordWidget.style.left = (mainRect.left - widgetWidth - gap) + 'px';
+          passwordWidget.style.top = topPosition + 'px';
+        }
+        
+        weatherWidget.style.visibility = 'visible';
+        weatherWidget.style.opacity = '1';
+        passwordWidget.style.visibility = 'visible';
+        passwordWidget.style.opacity = '1';
+      }
+
+      function onMouseDown(e, widget) {
+        if (coordForm.style.display === 'flex' && widget === weatherWidget) {
+          return;
+        }
+        if (e.target.closest('input, textarea, button, a, .mcwx-barbox')) {
+          return;
+        }
+        e.preventDefault();
+        isDragging = true;
+        activeWidget = widget;
+        offsetX = e.clientX - activeWidget.offsetLeft;
+        offsetY = e.clientY - activeWidget.offsetTop;
+        document.body.style.cursor = 'grabbing';
+        document.body.style.userSelect = 'none';
+      }
+
+      function onMouseMove(e) {
+        if (!isDragging || !activeWidget) return;
+        e.preventDefault();
+        const x = e.clientX - offsetX;
+        const y = e.clientY - offsetY;
+        activeWidget.style.left = x + 'px';
+        activeWidget.style.top = y + 'px';
+      }
+
+      function onMouseUp() {
+        if (isDragging) {
+          savePositions();
+        }
+        isDragging = false;
+        activeWidget = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+      
+      weatherWidget.addEventListener('mousedown', (e) => onMouseDown(e, weatherWidget));
+      passwordWidget.addEventListener('mousedown', (e) => onMouseDown(e, passwordWidget));
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+
+      document.addEventListener('DOMContentLoaded', loadAndPositionWidgets);
+    })();
+  </script>
+</body>
+
+</html>
