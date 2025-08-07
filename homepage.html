@@ -935,7 +935,7 @@
   </script>
 
   <script>
-    // --- СКРИПТ УПРАВЛЕНИЯ ВИДЖЕТАМИ (ПОЗИЦИЯ И ПЕРЕМЕЩЕНИЕ, ПЕРЕРАБОТАН) ---
+    // --- СКРИПТ УПРАВЛЕНИЯ ВИДЖЕТАМИ (ПОЗИЦИЯ И ПЕРЕМЕЩЕНИЕ, ОБНОВЛЕН) ---
     (function () {
       const weatherWidget = document.getElementById('widget');
       const passwordWidget = document.getElementById('password-generator-widget');
@@ -945,6 +945,7 @@
       let isDragging = false;
       let activeWidget = null;
       let offsetX, offsetY;
+      const MOVE_STEP = 3; // Скорость перемещения виджета стрелками
 
       function savePositions() {
         const weatherPos = { left: weatherWidget.offsetLeft, top: weatherWidget.offsetTop };
@@ -1032,15 +1033,44 @@
         document.body.style.userSelect = '';
       }
       
+      // --- НОВАЯ ЛОГИКА ДЛЯ ПЕРЕМЕЩЕНИЯ КЛАВИАТУРОЙ ---
+      function handleKeyboardMove(e) {
+        // Двигаем виджет стрелками, только если открыта форма координат
+        if (coordForm.style.display !== 'flex') {
+          return;
+        }
+
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          return;
+        }
+        
+        // Отменяем стандартное действие браузера (изменение числа в поле)
+        e.preventDefault();
+
+        let dx = 0, dy = 0;
+        if (e.key === 'ArrowUp') dy = -MOVE_STEP;
+        if (e.key === 'ArrowDown') dy = MOVE_STEP;
+        if (e.key === 'ArrowLeft') dx = -MOVE_STEP;
+        if (e.key === 'ArrowRight') dx = MOVE_STEP;
+
+        // Двигаем сам виджет погоды
+        weatherWidget.style.left = (weatherWidget.offsetLeft + dx) + 'px';
+        weatherWidget.style.top = (weatherWidget.offsetTop + dy) + 'px';
+      }
+
+      // --- СЛУШАТЕЛИ СОБЫТИЙ ---
       weatherWidget.addEventListener('mousedown', (e) => onMouseDown(e, weatherWidget));
       passwordWidget.addEventListener('mousedown', (e) => onMouseDown(e, passwordWidget));
-
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
+
+      // Добавляем новый слушатель для клавиатуры
+      document.addEventListener('keydown', handleKeyboardMove);
 
       document.addEventListener('DOMContentLoaded', loadAndPositionWidgets);
     })();
   </script>
 </body>
+
 
 </html>
