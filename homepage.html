@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 
@@ -746,7 +747,7 @@
     }
     function getStoredCoords() { try { let v = localStorage.getItem('mcwx_coords'); if (!v) return null; let j = JSON.parse(v); if (typeof j.lat !== 'number' || typeof j.lon !== 'number' || !j.city) return null; return j; } catch { return null; } }
     function setStoredCoords(lat, lon, city) { localStorage.setItem('mcwx_coords', JSON.stringify({ lat, lon, city })); }
-    function renderWidget() { const c = getStoredCoords(); if (c) fillWidget(c.lat, c.lon, c.city); else fillWidget(53.1333, 29.2167, "Бобруйск"); }
+    function renderWidget() { const c = getStoredCoords(); if (c) fillWidget(c.lat, c.lon, c.city); else fillWidget(53.905876, 27.543439, "Минск"); }
     
     // --- ИСХОДНАЯ ЗАГРУЗКА ВИДЖЕТА ---
     renderWidget();
