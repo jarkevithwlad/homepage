@@ -1,243 +1,301 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Голосовой чат по WebRTC (Opus 512kbps)</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f2f5; margin: 0; padding: 20px; box-sizing: border-box; }
-        h1, h2 { color: #333; text-align: center; }
-        p { text-align: center; }
-        #chat-container { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 100%; max-width: 500px; }
-        #connection-manager { padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; width: 100%; }
-        textarea { width: 95%; min-height: 100px; margin: 10px auto; display: block; padding: 8px; font-size: 0.9em; }
-        button { font-size: 1em; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; background-color: #007bff; color: white; margin: 5px auto; display: block; width: 95%; }
-        button:hover { background-color: #0056b3; }
-        #status-bar { margin: 20px 0; text-align: center; }
-        #status { font-size: 1.2em; font-weight: bold; color: #d9534f; }
-        audio { margin-top: 20px; border: 1px solid #ccc; border-radius: 8px; width: 100%; }
-    </style>
+  <meta charset="utf-8">
+  <title>Отладка «Создать приглашение»</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    header { padding: 16px; background: #0d6efd; color: #fff; }
+    main { padding: 16px; display: grid; gap: 16px; }
+    section { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+    h2 { margin: 0 0 8px; font-size: 18px; }
+    .row { display: grid; gap: 8px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 10px 14px; border: 1px solid #bbb; border-radius: 6px; background: #f5f5f5; cursor: pointer; }
+    button.primary { background: #0d6efd; color: #fff; border-color: #0d6efd; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    input, textarea { width: 100%; padding: 10px; border: 1px solid #bbb; border-radius: 6px; font-family: inherit; }
+    textarea { min-height: 68px; }
+    .status { font-size: 14px; color: #555; }
+    .ok { color: #0a7f2e; }
+    .err { color: #b00020; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    #debug {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      max-height: 40vh; overflow: auto; background: #111; color: #0f0;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      z-index: 99999; padding: 8px; box-shadow: 0 -2px 8px rgba(0,0,0,.25);
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .kbd { background:#eee; border:1px solid #ccc; border-radius:4px; padding:0 4px; font-family:inherit; }
+  </style>
 </head>
 <body>
+  <header>
+    <div>Диагностика приглашения: микрофон, генерация кода, вывод в UI</div>
+  </header>
 
-    <h1>Голосовой чат (Peer-to-Peer через WebRTC)</h1>
-    <h2>Качество: Opus, Стерео, 512kbps</h2>
-    <div id="status-bar">
-        <div id="status">Статус: Ожидание соединения...</div>
-    </div>
+  <main>
+    <section class="row">
+      <h2>1) Шаги пользователям</h2>
+      <div>Пользователь 1: Нажмите «Создать приглашение», скопируйте код и отправьте Пользователю 2.</div>
+      <div>Пользователь 2: Вставьте код от Пользователя 1, нажмите «Принять», скопируйте свой ответный код и отправьте обратно.</div>
+      <div>Пользователь 1: Вставьте ответный код и нажмите «Подключиться».</div>
+    </section>
 
-    <div id="chat-container">
-        <div id="connection-manager">
-            <h2>Настройка соединения</h2>
-            <p><b>Пользователь 1:</b> Нажмите "Создать приглашение", скопируйте код и отправьте его Пользователю 2.</p>
-            <button id="createOfferBtn">1. Создать приглашение</button>
-            <textarea id="offerText" placeholder="Здесь появится код приглашения..." readonly></textarea>
+    <section class="row">
+      <h2>2) Создать приглашение</h2>
+      <div class="status" id="statusCreate">Готово к созданию приглашения.</div>
+      <div class="actions">
+        <button id="btnCreate" class="primary">Создать приглашение</button>
+        <button id="btnCopy" disabled>Копировать код</button>
+      </div>
+      <label for="inviteCode">Код приглашения:</label>
+      <textarea id="inviteCode" class="mono" placeholder="Здесь появится код после создания..." readonly></textarea>
+    </section>
 
-            <p><b>Пользователь 2:</b> Вставьте код от Пользователя 1, нажмите "Принять", скопируйте свой код и отправьте обратно.</p>
-            <textarea id="answerText" placeholder="Вставьте сюда код от другого пользователя..."></textarea>
-            <button id="createAnswerBtn">2. Принять приглашение</button>
+    <section class="row">
+      <h2>3) Принять приглашение</h2>
+      <div class="status" id="statusAccept">Вставьте код от Пользователя 1 и нажмите «Принять».</div>
+      <label for="remoteCode">Код от Пользователя 1:</label>
+      <textarea id="remoteCode" class="mono" placeholder="Вставьте чужой код сюда..."></textarea>
+      <div class="actions">
+        <button id="btnAccept">Принять</button>
+        <button id="btnGenAnswer">Тест: сгенерировать ответный код</button>
+      </div>
+      <label for="answerCode">Ответный код (для отправки обратно Пользователю 1):</label>
+      <textarea id="answerCode" class="mono" placeholder="Здесь появится ответный код..." readonly></textarea>
+    </section>
 
-            <p><b>Пользователь 1:</b> Вставьте ответный код от Пользователя 2 и нажмите "Подключиться".</p>
-            <button id="connectBtn">3. Подключиться</button>
-        </div>
-        
-        <audio id="remoteAudio" controls autoplay playsinline></audio>
-    </div>
-    
-    <button id="disconnectBtn" style="margin-top: 20px; background-color: #d9534f;" hidden>Завершить звонок</button>
+    <section class="row">
+      <h2>4) Подключение</h2>
+      <div class="status" id="statusConnect">Вставьте ответный код и нажмите «Подключиться».</div>
+      <label for="answerFromPeer">Ответный код от Пользователя 2:</label>
+      <textarea id="answerFromPeer" class="mono" placeholder="Вставьте ответный код от второго пользователя..."></textarea>
+      <div class="actions">
+        <button id="btnConnect">Подключиться</button>
+      </div>
+    </section>
 
-<script>
-    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    let peerConnection;
-    let localStream;
+    <section class="row">
+      <h2>5) Системные проверки</h2>
+      <div id="envChecks" class="status"></div>
+      <div>Подсказки:</div>
+      - Откройте страницу по HTTPS (или http://localhost для разработки). На file:// не будет работать доступ к микрофону.<br>
+      - Разрешите микрофон в настройках сайта (иконка замка → Разрешения).<br>
+      - Вызывайте доступ к микрофону строго по клику на кнопку.<br>
+      - Если элемент для вывода кода не найден, будет показана явная ошибка.<br>
+      - Все ошибки пишутся в нижний черный лог и дублируются в текст статуса.
+    </section>
+  </main>
 
-    const statusEl = document.getElementById('status');
-    const createOfferBtn = document.getElementById('createOfferBtn');
-    const createAnswerBtn = document.getElementById('createAnswerBtn');
-    const connectBtn = document.getElementById('connectBtn');
-    const offerText = document.getElementById('offerText');
-    const answerText = document.getElementById('answerText');
-    const remoteAudio = document.getElementById('remoteAudio');
-    const disconnectBtn = document.getElementById('disconnectBtn');
-    const connectionManagerEl = document.getElementById('connection-manager');
+  <div id="debug"></div>
 
-    // --- Логика WebRTC ---
-
-    async function initializeConnection() {
-        if (peerConnection) {
-            peerConnection.close();
-        }
-        peerConnection = new RTCPeerConnection(configuration);
-
-        peerConnection.ontrack = event => {
-            if (event.streams && event.streams[0]) {
-                remoteAudio.srcObject = event.streams[0];
-            }
-        };
-        
-        try {
-            if (!localStream) {
-                 localStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    }
-                });
-            }
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-        } catch (error) {
-            console.error("Ошибка при доступе к микрофону:", error);
-            statusEl.textContent = 'Ошибка: Не удалось получить доступ к микрофону.';
-            throw error;
-        }
-
-        peerConnection.onconnectionstatechange = () => {
-            console.log(`Connection state: ${peerConnection.connectionState}`);
-            if (peerConnection.connectionState === 'connected') {
-                statusEl.textContent = 'Соединение установлено!';
-                statusEl.style.color = '#5cb85c';
-                connectionManagerEl.hidden = true;
-                disconnectBtn.hidden = false;
-            }
-             if (peerConnection.connectionState === 'failed') {
-                statusEl.textContent = 'Ошибка соединения.';
-                statusEl.style.color = '#d9534f';
-            }
-        };
+  <script>
+  (function setupDebug(){
+    const dbg = document.getElementById('debug');
+    function pad(n){ return n<10?'0'+n:n; }
+    function ts(){
+      const d = new Date();
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3,'0')}`;
     }
-    
-    function handleCreateOffer() {
-        initializeConnection().then(async () => {
-            peerConnection.onicegatheringstatechange = () => {
-                console.log(`ICE gathering state: ${peerConnection.iceGatheringState}`);
-                if (peerConnection.iceGatheringState === 'complete') {
-                    offerText.value = JSON.stringify(peerConnection.localDescription);
-                    statusEl.textContent = 'Код приглашения создан. Отправьте его второму пользователю.';
-                }
-            };
-            
-            const offer = await peerConnection.createOffer();
-            const highQualityOfferSDP = setOpusMaxQuality(offer.sdp);
-            await peerConnection.setLocalDescription({ type: 'offer', sdp: highQualityOfferSDP });
-        }).catch(err => {
-            console.error("Could not initialize connection for offer", err);
-        });
+    function logLine(level, args){
+      const s = Array.from(args).map(a=>{
+        if (a instanceof Error) return a.stack || a.message;
+        try { return typeof a==='object' ? JSON.stringify(a) : String(a); }
+        catch(_) { return String(a); }
+      }).join(' ');
+      dbg.textContent += `[${ts()}] ${level} ${s}\n`;
+      dbg.scrollTop = dbg.scrollHeight;
     }
+    const orig = { log: console.log, warn: console.warn, error: console.error };
+    console.log = (...a)=>{ logLine('[LOG]', a); orig.log.apply(console, a); };
+    console.warn = (...a)=>{ logLine('[WRN]', a); orig.warn.apply(console, a); };
+    console.error = (...a)=>{ logLine('[ERR]', a); orig.error.apply(console, a); };
+    window.addEventListener('error', e=>console.error('window.error', e.message, e.filename+':'+e.lineno+':'+e.colno));
+    window.addEventListener('unhandledrejection', e=>console.error('unhandledrejection', (e.reason && (e.reason.stack||e.reason.message)) || String(e.reason)));
+    window.__dlog = (...a)=>console.log('[D]', ...a);
+  })();
 
-    function handleCreateAnswer() {
-        const offerValue = answerText.value.trim();
-        if (!offerValue) {
-            statusEl.textContent = 'Ошибка: Вставьте код приглашения.';
-            return;
-        }
+  function setStatus(el, text, type){
+    el.textContent = text;
+    el.classList.remove('ok','err');
+    if (type==='ok') el.classList.add('ok');
+    if (type==='err') el.classList.add('err');
+  }
 
-        initializeConnection().then(async () => {
-            peerConnection.onicegatheringstatechange = () => {
-                console.log(`ICE gathering state: ${peerConnection.iceGatheringState}`);
-                if (peerConnection.iceGatheringState === 'complete') {
-                    offerText.value = JSON.stringify(peerConnection.localDescription);
-                    statusEl.textContent = 'Ответный код создан. Отправьте его обратно первому пользователю.';
-                }
-            };
+  function envChecks(){
+    const el = document.getElementById('envChecks');
+    const isSecure = window.isSecureContext;
+    const proto = location.protocol;
+    const host = location.hostname;
+    const ua = navigator.userAgent;
+    const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    const lines = [];
+    lines.push(`Безопасный контекст: ${isSecure?'да':'нет'} (${proto}//${host})`);
+    lines.push(`getUserMedia: ${hasMediaDevices?'доступно':'нет'}`);
+    lines.push(`UA: ${ua}`);
+    el.textContent = lines.join(' | ');
+    __dlog('env', {isSecure, proto, host, hasMediaDevices});
+  }
 
-            const offer = JSON.parse(offerValue);
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-            
-            const answer = await peerConnection.createAnswer();
-            const highQualityAnswerSDP = setOpusMaxQuality(answer.sdp);
-            await peerConnection.setLocalDescription({ type: 'answer', sdp: highQualityAnswerSDP });
-        }).catch(err => {
-            console.error("Could not initialize connection for answer", err);
-        });
+  async function requestMicOnce(){
+    __dlog('request mic start');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('getUserMedia недоступен в этом контексте (нужен HTTPS или поддержка браузером).');
     }
+    // Только аудио — чтобы минимизировать запросы разрешений
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    __dlog('mic ok tracks', stream.getAudioTracks().length);
+    return stream;
+  }
 
-    async function handleConnection() {
-        const answerValue = answerText.value.trim();
-        if (!peerConnection) {
-            statusEl.textContent = 'Сначала создайте приглашение (Шаг 1)';
-            return;
-        }
-        if (!answerValue) {
-            statusEl.textContent = 'Ошибка: Вставьте ответный код.';
-            return;
-        }
-        try {
-            const answer = JSON.parse(answerValue);
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-        } catch (error) {
-            console.error("Ошибка при установке remote description:", error);
-            statusEl.textContent = 'Ошибка: неверный ответный код.';
-        }
+  // Демо-генератор "кода приглашения".
+  function generateInviteCode(payload){
+    // На практике сюда подставьте реальный оффер SDP/WebRTC или код из бэкенда.
+    const blob = {
+      t: 'invite',
+      ts: Date.now(),
+      rnd: Math.random().toString(36).slice(2, 10),
+      data: payload || {}
+    };
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(blob))));
+    return code;
+  }
+
+  // Демо-парсер кода
+  function parseCode(code){
+    const json = decodeURIComponent(escape(atob(code)));
+    return JSON.parse(json);
+  }
+
+  function copyText(text){
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
     }
+    // Фоллбэк
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch(_) {}
+    document.body.removeChild(ta);
+    return ok ? Promise.resolve() : Promise.reject(new Error('Не удалось скопировать'));
+  }
 
-    function handleDisconnect() {
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
+  async function main(){
+    envChecks();
+
+    const btnCreate = document.getElementById('btnCreate');
+    const btnCopy = document.getElementById('btnCopy');
+    const inviteCode = document.getElementById('inviteCode');
+    const statusCreate = document.getElementById('statusCreate');
+
+    const btnAccept = document.getElementById('btnAccept');
+    const btnGenAnswer = document.getElementById('btnGenAnswer');
+    const remoteCode = document.getElementById('remoteCode');
+    const answerCode = document.getElementById('answerCode');
+    const statusAccept = document.getElementById('statusAccept');
+
+    const btnConnect = document.getElementById('btnConnect');
+    const answerFromPeer = document.getElementById('answerFromPeer');
+    const statusConnect = document.getElementById('statusConnect');
+
+    // 1) Создать приглашение
+    btnCreate.addEventListener('click', async ()=>{
+      setStatus(statusCreate, 'Шаг 1: запрос микрофона…', null);
+      btnCreate.disabled = true;
+      try {
+        const stream = await requestMicOnce(); // важно: по клику
+        // здесь мог бы быть WebRTC: pc.createOffer(), pc.setLocalDescription(), затем код = btoa(JSON.stringify(offer))
+        setStatus(statusCreate, 'Шаг 2: генерация кода…', null);
+        const code = generateInviteCode({ audioTracks: stream.getAudioTracks().length });
+
+        const el = document.getElementById('inviteCode');
+        if (!el) {
+          __dlog('ERROR: #inviteCode not found');
+          throw new Error('Элемент для вывода кода (#inviteCode) не найден.');
         }
-        if(localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-        }
-        remoteAudio.srcObject = null;
-        statusEl.textContent = 'Звонок завершен.';
-        statusEl.style.color = '#d9534f';
-        connectionManagerEl.hidden = false;
-        disconnectBtn.hidden = true;
-        offerText.value = '';
-        answerText.value = '';
-    }
+        el.value = code;
+        btnCopy.disabled = !code;
+        setStatus(statusCreate, 'Готово: код создан и показан.', 'ok');
+        __dlog('invite code length', code.length);
+      } catch (e) {
+        console.error('create error', e);
+        setStatus(statusCreate, 'Ошибка при создании приглашения: ' + (e.message || String(e)), 'err');
+        btnCreate.disabled = false; // позволяем попробовать снова
+      }
+    });
 
-    createOfferBtn.addEventListener('click', handleCreateOffer);
-    createAnswerBtn.addEventListener('click', handleCreateAnswer);
-    connectBtn.addEventListener('click', handleConnection);
-    disconnectBtn.addEventListener('click', handleDisconnect);
+    // Копирование кода
+    btnCopy.addEventListener('click', async ()=>{
+      try {
+        const code = inviteCode.value.trim();
+        if (!code) throw new Error('Код пуст.');
+        await copyText(code);
+        setStatus(statusCreate, 'Код скопирован в буфер обмена.', 'ok');
+      } catch (e) {
+        console.error('copy error', e);
+        setStatus(statusCreate, 'Не удалось скопировать: ' + (e.message || String(e)), 'err');
+      }
+    });
 
-    function setOpusMaxQuality(sdp) {
-        let sdpLines = sdp.split('\r\n');
-        let opusPayload;
+    // 2) Принять приглашение (Пользователь 2)
+    btnAccept.addEventListener('click', async ()=>{
+      setStatus(statusAccept, 'Проверка кода…', null);
+      try {
+        const code = remoteCode.value.trim();
+        if (!code) throw new Error('Вставьте код приглашения.');
+        let parsed;
+        try { parsed = parseCode(code); }
+        catch(e) { throw new Error('Код поврежден или неверного формата.'); }
+        __dlog('parsed invite', parsed);
 
-        for (let i = 0; i < sdpLines.length; i++) {
-            if (sdpLines[i].includes('opus/48000')) {
-                const match = sdpLines[i].match(/(\d+) opus\/48000/);
-                if (match) {
-                    opusPayload = match[1];
-                    break;
-                }
-            }
-        }
+        // Здесь могла бы быть логика: pc.setRemoteDescription(offer), запрос микрофона по клику и создание answer
+        setStatus(statusAccept, 'Генерация ответного кода…', null);
+        const answer = generateInviteCode({ accepted: true, fromInvite: parsed.rnd });
+        answerCode.value = answer;
+        setStatus(statusAccept, 'Ответный код готов: отправьте его Пользователю 1.', 'ok');
+      } catch (e) {
+        console.error('accept error', e);
+        setStatus(statusAccept, 'Ошибка при принятии: ' + (e.message || String(e)), 'err');
+      }
+    });
 
-        if (!opusPayload) {
-            console.warn("Opus payload не найден в SDP. Качество не будет изменено.");
-            return sdp;
-        }
-        
-        let fmtpLineIndex = -1;
-        for (let i = 0; i < sdpLines.length; i++) {
-            if (sdpLines[i].startsWith('a=fmtp:' + opusPayload)) {
-                fmtpLineIndex = i;
-                break;
-            }
-        }
+    // Вспомогательная кнопка для теста (без второго устройства)
+    btnGenAnswer.addEventListener('click', ()=>{
+      try {
+        const fake = generateInviteCode({ test: true });
+        answerCode.value = fake;
+        setStatus(statusAccept, 'Тестовый ответный код создан.', 'ok');
+      } catch(e) {
+        console.error('gen answer error', e);
+        setStatus(statusAccept, 'Ошибка генерации тест-кода: ' + (e.message || String(e)), 'err');
+      }
+    });
 
-        if (fmtpLineIndex !== -1) {
-            sdpLines[fmtpLineIndex] = sdpLines[fmtpLineIndex] + '; stereo=1; sprop-stereo=1; maxaveragebitrate=512000; cbr=1; useinbandfec=1';
-            console.log("Модифицированная строка SDP:", sdpLines[fmtpLineIndex]);
-        } else {
-             const rtpmapLineIndex = sdpLines.findIndex(line => line.startsWith('a=rtpmap:' + opusPayload));
-             if (rtpmapLineIndex !== -1) {
-                const newFmtpLine = `a=fmtp:${opusPayload} stereo=1; sprop-stereo=1; maxaveragebitrate=512000; cbr=1; useinbandfec=1`;
-                sdpLines.splice(rtpmapLineIndex + 1, 0, newFmtpLine);
-                console.log("Добавлена новая строка SDP:", newFmtpLine);
-             }
-        }
-        
-        return sdpLines.join('\r\n');
-    }
-</script>
+    // 3) Подключение (Пользователь 1 вставляет ответный код)
+    btnConnect.addEventListener('click', async ()=>{
+      setStatus(statusConnect, 'Проверка ответного кода…', null);
+      try {
+        const code = answerFromPeer.value.trim();
+        if (!code) throw new Error('Вставьте ответный код.');
+        let parsed;
+        try { parsed = parseCode(code); }
+        catch(e) { throw new Error('Ответный код поврежден или неверного формата.'); }
+        __dlog('parsed answer', parsed);
 
+        // Здесь могла бы быть логика: pc.setRemoteDescription(answer), ожидание established
+        setStatus(statusConnect, 'Подключение установлено (демо).', 'ok');
+      } catch (e) {
+        console.error('connect error', e);
+        setStatus(statusConnect, 'Ошибка подключения: ' + (e.message || String(e)), 'err');
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', main);
+  </script>
 </body>
 </html>
