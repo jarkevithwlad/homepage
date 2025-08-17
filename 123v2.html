@@ -60,23 +60,20 @@
         <div>- Пользователь 1 → «Создать приглашение» → скопировать Offer-код и передать Пользователю 2.</div>
         <div>- Пользователь 2 → вставить Offer → «Принять (создать Answer)» → отправить Answer пользователю 1.</div>
         <div>- Пользователь 1 → вставить Answer → «Подключиться».</div>
-        <div class="hint">Советы: используйте на каждом устройстве разные браузеры/сети при необходимости; разрешите микрофон; тестируйте по HTTPS.</div>
+        <div class="hint">Советы: оба по HTTPS, разрешите микрофон, при проблемах в сетях добавьте TURN в ICE-сервера.</div>
       </div>
     </section>
 
     <section class="grid">
       <h2>Настройки ICE</h2>
       <div class="row">
-        <label for="iceInput">ICE-сервера (JSON):</label>
+        <label for="iceInput">ICE-сервера (валидный JSON):</label>
         <textarea id="iceInput" spellcheck="false" class="mono small">{
   "iceServers": [
-    { "urls": ["stun:stun.l.google.com:19302","stun:global.stun.twilio.com:3478"] }
-    /* Добавьте свой TURN, например:
-    { "urls": "turn:turn.example.com:3478", "username": "user", "credential": "pass" }
-    */
+    { "urls": ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }
   ]
 }</textarea>
-        <div class="hint">Если соединение не устанавливается (NAT/CGNAT/строгий Wi‑Fi), добавьте свой TURN‑сервер. Без TURN P2P может не пройти.</div>
+        <div class="hint">Можно заменить на ваши STUN/TURN. Пример TURN: {"iceServers":[{"urls":["turn:turn.example.com:3478"],"username":"user","credential":"pass"}]}</div>
       </div>
     </section>
 
@@ -194,14 +191,13 @@
       const data = new Uint8Array(analyser.fftSize);
       function tick(){
         analyser.getByteTimeDomainData(data);
-        // RMS
         let sum=0;
         for(let i=0;i<data.length;i++){
           const v=(data[i]-128)/128;
           sum += v*v;
         }
         const rms = Math.sqrt(sum/data.length);
-        const pct = Math.min(100, Math.max(0, Math.round(rms*160))); // эмпирически
+        const pct = Math.min(100, Math.max(0, Math.round(rms*160)));
         barEl.style.width = pct+'%';
         if(pillEl) pillEl.textContent = `уровень: ${pct}%`;
         requestAnimationFrame(tick);
@@ -214,26 +210,24 @@
     }
   }
 
-  // ======= Кодирование/декодирование SDP + ICE в «код» =======
+  // ======= Кодирование/декодирование SDP в «код» =======
   function encode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
   function decode(str){ return JSON.parse(decodeURIComponent(escape(atob(str)))); }
 
-  // ======= Глобальные переменные соединения =======
-  let pc1 = null, pc2 = null; // pc1 — у Пользователя 1, pc2 — у Пользователя 2
+  // ======= Переменные соединения =======
+  let pc1 = null, pc2 = null;
   let localStream = null;
   let remoteStream = null;
   let localMeterCtx = null, remoteMeterCtx = null;
-  let pendingCandidatesPC1 = []; // буферы ICE, пока LocalDescription не установлена
-  let pendingCandidatesPC2 = [];
 
   function parseIceConfig(){
-    try{
-      const raw = document.getElementById('iceInput').value.trim();
-      const cfg = JSON.parse(raw);
-      return cfg;
-    }catch(e){
-      throw new Error('Неверный формат ICE JSON. Исправьте в блоке «ICE-сервера».');
+    const raw = document.getElementById('iceInput').value.trim();
+    // Валидация чистого JSON без комментариев
+    const cfg = JSON.parse(raw);
+    if(!cfg || typeof cfg!=='object' || !Array.isArray(cfg.iceServers)) {
+      throw new Error('Ожидается объект {"iceServers":[...]}.');
     }
+    return cfg;
   }
 
   async function getMic(){
@@ -245,7 +239,6 @@
 
   function setPill(id, text){ const el=document.getElementById(id); if(el) el.textContent=text; }
 
-  // ======= Инициализация UI =======
   document.addEventListener('DOMContentLoaded', ()=>{
     envChecks();
 
@@ -290,31 +283,26 @@
         pc1 = new RTCPeerConnection(iceCfg);
         setPill('pillPC1', 'PC1: создан');
         remoteStream = new MediaStream();
-        // Приём удалённых треков
+
         pc1.addEventListener('track', (e)=>{
-          __dlog('pc1 ontrack', e.streams?.[0]);
-          e.streams.getAudioTracks().forEach(t=>remoteStream.addTrack(t));
+          __dlog('pc1 ontrack');
+          e.streams[0].getAudioTracks().forEach(t=>remoteStream.addTrack(t));
           remoteAudio.srcObject = remoteStream;
           remoteAudio.play().catch(()=>{});
           pillRemote.textContent = 'есть поток';
           if(!remoteMeterCtx){ remoteMeterCtx = createMeter(remoteStream, barRemote, pillRemote); }
         });
 
-        // Добавляем локальные аудиотреки
         localStream.getAudioTracks().forEach(track => pc1.addTrack(track, localStream));
         localAudio.srcObject = localStream;
-        localAudio.muted = true; // чтобы не фонило
+        localAudio.muted = true;
         localAudio.play().catch(()=>{});
         pillLocal.textContent = 'есть поток';
         if(!localMeterCtx){ localMeterCtx = createMeter(localStream, barLocal, pillLocal); }
 
-        // ICE кандидаты
         pc1.addEventListener('icecandidate', (e)=>{
-          if(e.candidate){
-            __dlog('pc1 icecandidate', e.candidate.candidate);
-          }else{
-            __dlog('pc1 ice done');
-          }
+          if(e.candidate){ __dlog('pc1 icecandidate'); }
+          else { __dlog('pc1 ice done'); }
         });
 
         pc1.addEventListener('connectionstatechange', ()=>{
@@ -326,7 +314,6 @@
         const offer = await pc1.createOffer({ offerToReceiveAudio: true });
         await pc1.setLocalDescription(offer);
 
-        // Ждём ICE‑gathering complete, чтобы код был самодостаточным
         await waitForIceGatheringComplete(pc1);
 
         const out = { type: 'offer', sdp: pc1.localDescription.sdp };
@@ -359,7 +346,6 @@
         setStatus(statusAccept, 'Чтение Offer…', null);
         const raw = offerIn.value.trim();
         if(!raw) throw new Error('Вставьте Offer.');
-
         const offerObj = decode(raw);
         if(offerObj.type!=='offer' || !offerObj.sdp) throw new Error('Неверный код Offer.');
 
@@ -370,17 +356,15 @@
         pc2 = new RTCPeerConnection(iceCfg);
         setPill('pillPC2', 'PC2: создан');
 
-        // Приём удалённых треков (для второго тоже допустим слушать)
         const remote2 = new MediaStream();
         pc2.addEventListener('track', (e)=>{
           e.streams[0].getAudioTracks().forEach(t=>remote2.addTrack(t));
         });
 
-        // Локальные треки
         stream.getAudioTracks().forEach(track => pc2.addTrack(track, stream));
 
         pc2.addEventListener('icecandidate', (e)=>{
-          if(e.candidate){ __dlog('pc2 icecandidate', e.candidate.candidate); }
+          if(e.candidate){ __dlog('pc2 icecandidate'); }
           else { __dlog('pc2 ice done'); }
         });
 
@@ -434,7 +418,6 @@
         await pc1.setRemoteDescription({ type:'answer', sdp: ans.sdp });
         setStatus(statusConnect, 'Answer установлен. Ожидание установления соединения…', null);
 
-        // Ждем стабильного состояния
         await waitForConnection(pc1, (state)=>{
           setPill('pillState','Соединение: '+state);
         });
@@ -447,12 +430,10 @@
       }
     });
 
-    // Автоматические метки состояния
     setInterval(()=>{
       if(pc1) setPill('pillPC1','PC1: '+pc1.iceConnectionState+'/'+pc1.connectionState);
       if(pc2) setPill('pillPC2','PC2: '+pc2.iceConnectionState+'/'+pc2.connectionState);
     }, 800);
-
   });
 
   // ======= Вспомогательные функции =======
@@ -461,7 +442,6 @@
     await new Promise(resolve=>{
       const check=()=>{ if(pc.iceGatheringState==='complete'){ pc.removeEventListener('icegatheringstatechange', check); resolve(); } };
       pc.addEventListener('icegatheringstatechange', check);
-      // safety timeout 8s
       setTimeout(()=>{ pc.removeEventListener('icegatheringstatechange', check); resolve(); }, 8000);
     });
   }
@@ -473,13 +453,10 @@
         if(pc.connectionState==='connected' || pc.connectionState==='completed'){
           pc.removeEventListener('connectionstatechange', handler);
           resolve();
-        } else if (pc.connectionState==='failed' || pc.connectionState==='disconnected' || pc.connectionState==='closed'){
-          // не резолвим — оставим управление вызывающей стороне
         }
       }
       pc.addEventListener('connectionstatechange', handler);
       handler();
-      // safety timeout
       setTimeout(()=>{ pc.removeEventListener('connectionstatechange', handler); resolve(); }, 15000);
     });
   }
