@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голосовой чат по WebRTC (Opus 512kbps)</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f2f5; margin: 0; padding: 20px; box-sizing: border-box; }
+        h1, h2 { color: #333; text-align: center; }
+        p { text-align: center; }
+        #chat-container { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 100%; max-width: 500px; }
+        #connection-manager { padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; width: 100%; }
+        textarea { width: 95%; min-height: 100px; margin: 10px auto; display: block; padding: 8px; font-size: 0.9em; }
+        button { font-size: 1em; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; background-color: #007bff; color: white; margin: 5px auto; display: block; width: 95%; }
+        button:hover { background-color: #0056b3; }
+        #status-bar { margin: 20px 0; text-align: center; }
+        #status { font-size: 1.2em; font-weight: bold; color: #d9534f; }
+        audio { margin-top: 20px; border: 1px solid #ccc; border-radius: 8px; width: 100%; }
+    </style>
+</head>
+<body>
+
+    <h1>Голосовой чат (Peer-to-Peer через WebRTC)</h1>
+    <h2>Качество: Opus, Стерео, 512kbps</h2>
+    <div id="status-bar">
+        <div id="status">Статус: Ожидание соединения...</div>
+    </div>
+
+    <div id="chat-container">
+        <div id="connection-manager">
+            <h2>Настройка соединения</h2>
+            <p><b>Пользователь 1:</b> Нажмите "Создать приглашение", скопируйте код и отправьте его Пользователю 2.</p>
+            <button id="createOfferBtn">1. Создать приглашение</button>
+            <textarea id="offerText" placeholder="Здесь появится код приглашения..." readonly></textarea>
+
+            <p><b>Пользователь 2:</b> Вставьте код от Пользователя 1, нажмите "Принять", скопируйте свой код и отправьте обратно.</p>
+            <textarea id="answerText" placeholder="Вставьте сюда код от другого пользователя..."></textarea>
+            <button id="createAnswerBtn">2. Принять приглашение</button>
+
+            <p><b>Пользователь 1:</b> Вставьте ответный код от Пользователя 2 и нажмите "Подключиться".</p>
+            <button id="connectBtn">3. Подключиться</button>
+        </div>
+        
+        <audio id="remoteAudio" controls autoplay playsinline></audio>
+    </div>
+    
+    <button id="disconnectBtn" style="margin-top: 20px; background-color: #d9534f;" hidden>Завершить звонок</button>
+
+<script>
+    const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    let peerConnection;
+    let localStream;
+
+    const statusEl = document.getElementById('status');
+    const createOfferBtn = document.getElementById('createOfferBtn');
+    const createAnswerBtn = document.getElementById('createAnswerBtn');
+    const connectBtn = document.getElementById('connectBtn');
+    const offerText = document.getElementById('offerText');
+    const answerText = document.getElementById('answerText');
+    const remoteAudio = document.getElementById('remoteAudio');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const connectionManagerEl = document.getElementById('connection-manager');
+
+    // --- Логика WebRTC ---
+
+    async function initializeConnection() {
+        if (peerConnection) {
+            peerConnection.close();
+        }
+        peerConnection = new RTCPeerConnection(configuration);
+
+        peerConnection.ontrack = event => {
+            if (event.streams && event.streams[0]) {
+                remoteAudio.srcObject = event.streams[0];
+            }
+        };
+        
+        try {
+            if (!localStream) {
+                 localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+            }
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+        } catch (error) {
+            console.error("Ошибка при доступе к микрофону:", error);
+            statusEl.textContent = 'Ошибка: Не удалось получить доступ к микрофону.';
+            throw error;
+        }
+
+        peerConnection.onconnectionstatechange = () => {
+            console.log(`Connection state: ${peerConnection.connectionState}`);
+            if (peerConnection.connectionState === 'connected') {
+                statusEl.textContent = 'Соединение установлено!';
+                statusEl.style.color = '#5cb85c';
+                connectionManagerEl.hidden = true;
+                disconnectBtn.hidden = false;
+            }
+             if (peerConnection.connectionState === 'failed') {
+                statusEl.textContent = 'Ошибка соединения.';
+                statusEl.style.color = '#d9534f';
+            }
+        };
+    }
+    
+    function handleCreateOffer() {
+        initializeConnection().then(async () => {
+            peerConnection.onicegatheringstatechange = () => {
+                console.log(`ICE gathering state: ${peerConnection.iceGatheringState}`);
+                if (peerConnection.iceGatheringState === 'complete') {
+                    offerText.value = JSON.stringify(peerConnection.localDescription);
+                    statusEl.textContent = 'Код приглашения создан. Отправьте его второму пользователю.';
+                }
+            };
+            
+            const offer = await peerConnection.createOffer();
+            const highQualityOfferSDP = setOpusMaxQuality(offer.sdp);
+            await peerConnection.setLocalDescription({ type: 'offer', sdp: highQualityOfferSDP });
+        }).catch(err => {
+            console.error("Could not initialize connection for offer", err);
+        });
+    }
+
+    function handleCreateAnswer() {
+        const offerValue = answerText.value.trim();
+        if (!offerValue) {
+            statusEl.textContent = 'Ошибка: Вставьте код приглашения.';
+            return;
+        }
+
+        initializeConnection().then(async () => {
+            peerConnection.onicegatheringstatechange = () => {
+                console.log(`ICE gathering state: ${peerConnection.iceGatheringState}`);
+                if (peerConnection.iceGatheringState === 'complete') {
+                    offerText.value = JSON.stringify(peerConnection.localDescription);
+                    statusEl.textContent = 'Ответный код создан. Отправьте его обратно первому пользователю.';
+                }
+            };
+
+            const offer = JSON.parse(offerValue);
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            
+            const answer = await peerConnection.createAnswer();
+            const highQualityAnswerSDP = setOpusMaxQuality(answer.sdp);
+            await peerConnection.setLocalDescription({ type: 'answer', sdp: highQualityAnswerSDP });
+        }).catch(err => {
+            console.error("Could not initialize connection for answer", err);
+        });
+    }
+
+    async function handleConnection() {
+        const answerValue = answerText.value.trim();
+        if (!peerConnection) {
+            statusEl.textContent = 'Сначала создайте приглашение (Шаг 1)';
+            return;
+        }
+        if (!answerValue) {
+            statusEl.textContent = 'Ошибка: Вставьте ответный код.';
+            return;
+        }
+        try {
+            const answer = JSON.parse(answerValue);
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        } catch (error) {
+            console.error("Ошибка при установке remote description:", error);
+            statusEl.textContent = 'Ошибка: неверный ответный код.';
+        }
+    }
+
+    function handleDisconnect() {
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        if(localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        remoteAudio.srcObject = null;
+        statusEl.textContent = 'Звонок завершен.';
+        statusEl.style.color = '#d9534f';
+        connectionManagerEl.hidden = false;
+        disconnectBtn.hidden = true;
+        offerText.value = '';
+        answerText.value = '';
+    }
+
+    createOfferBtn.addEventListener('click', handleCreateOffer);
+    createAnswerBtn.addEventListener('click', handleCreateAnswer);
+    connectBtn.addEventListener('click', handleConnection);
+    disconnectBtn.addEventListener('click', handleDisconnect);
+
+    function setOpusMaxQuality(sdp) {
+        let sdpLines = sdp.split('\r\n');
+        let opusPayload;
+
+        for (let i = 0; i < sdpLines.length; i++) {
+            if (sdpLines[i].includes('opus/48000')) {
+                const match = sdpLines[i].match(/(\d+) opus\/48000/);
+                if (match) {
+                    opusPayload = match[1];
+                    break;
+                }
+            }
+        }
+
+        if (!opusPayload) {
+            console.warn("Opus payload не найден в SDP. Качество не будет изменено.");
+            return sdp;
+        }
+        
+        let fmtpLineIndex = -1;
+        for (let i = 0; i < sdpLines.length; i++) {
+            if (sdpLines[i].startsWith('a=fmtp:' + opusPayload)) {
+                fmtpLineIndex = i;
+                break;
+            }
+        }
+
+        if (fmtpLineIndex !== -1) {
+            sdpLines[fmtpLineIndex] = sdpLines[fmtpLineIndex] + '; stereo=1; sprop-stereo=1; maxaveragebitrate=512000; cbr=1; useinbandfec=1';
+            console.log("Модифицированная строка SDP:", sdpLines[fmtpLineIndex]);
+        } else {
+             const rtpmapLineIndex = sdpLines.findIndex(line => line.startsWith('a=rtpmap:' + opusPayload));
+             if (rtpmapLineIndex !== -1) {
+                const newFmtpLine = `a=fmtp:${opusPayload} stereo=1; sprop-stereo=1; maxaveragebitrate=512000; cbr=1; useinbandfec=1`;
+                sdpLines.splice(rtpmapLineIndex + 1, 0, newFmtpLine);
+                console.log("Добавлена новая строка SDP:", newFmtpLine);
+             }
+        }
+        
+        return sdpLines.join('\r\n');
+    }
+</script>
+
+</body>
+</html>
