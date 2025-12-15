@@ -86,7 +86,9 @@
 
     /* --- ОБЩИЕ СТИЛИ ДЛЯ ВИДЖЕТОВ --- */
     .widget-base {
-      position: absolute;
+      position: fixed;
+      left: auto;
+      top: auto;
       /* Позиция будет управляться через JS */
       z-index: 10;
       backdrop-filter: blur(5px);
@@ -509,7 +511,7 @@
   <div id="main-content">
     <input type="search" id="google-search" placeholder="Google" autocomplete="on" autofocus />
     <div class="button-container">
-      <a href="https://www.youtube.com/" class="button"
+      <a id="btn-youtube" href="https://www.youtube.com/" class="button"
         style="position: relative; display: inline-block; text-decoration: none; color: #ffffff;">
         <img style="position: absolute; top: 0px; left: -4px; width: 160px; height: 90px;" src="youtube_logo.png"
           alt="Icon 1">
@@ -961,144 +963,122 @@
   </script>
 
   <script>
-    // --- СКРИПТ УПРАВЛЕНИЯ ВИДЖЕТАМИ (ПОЗИЦИЯ И ПЕРЕМЕЩЕНИЕ, ОБНОВЛЕН) ---
-    (function () {
-      const weatherWidget = document.getElementById('widget');
-      const passwordWidget = document.getElementById('password-generator-widget');
-      const coordForm = document.getElementById('coordform');
-      const mainContent = document.getElementById('main-content');
+// --- относительное позиционирование от кнопки YouTube ---
+(function(){
+  const weatherWidget = document.getElementById('widget');                 // погодный виджет [file:1]
+  const passwordWidget = document.getElementById('password-generator-widget'); // виджет паролей [file:1]
+  const coordForm = document.getElementById('coordform');                  // форма координат внутри погоды [file:1]
 
-      let isDragging = false;
-      let activeWidget = null;
-      let offsetX, offsetY;
-      const MOVE_STEP = 3; // Скорость перемещения виджета стрелками
+  const anchor = document.getElementById('btn-youtube') 
+               || document.querySelector('a.button[href="https://www.youtube.com"]'); // якорь [file:1]
 
-      function savePositions() {
-        const weatherPos = { left: weatherWidget.offsetLeft, top: weatherWidget.offsetTop };
-        localStorage.setItem('mcwx_widget_pos', JSON.stringify(weatherPos));
+  const GAP = 12;
+  const MOVESTEP = 3;
 
-        const passwordPos = { left: passwordWidget.offsetLeft, top: passwordWidget.offsetTop };
-        localStorage.setItem('pwd_widget_pos', JSON.stringify(passwordPos));
-      }
+  // гарантируем fixed (на случай, если CSS не подгрузился)
+  [weatherWidget, passwordWidget].forEach(el => { if (el) el.style.position = 'fixed'; });
 
-      function loadAndPositionWidgets() {
-        const mainRect = mainContent.getBoundingClientRect();
-        const widgetWidth = 329;
-        const widgetHeight = 411;
-        const gap = 40;
-        const topPosition = mainRect.top + (mainRect.height / 2) - (widgetHeight / 2);
+  function getAnchorRect(){
+    const r = anchor ? anchor.getBoundingClientRect() : null;
+    return r || {left: 20, top: 20, right: 20, bottom: 20, width: 0, height: 0};
+  }
 
-        const weatherPosStr = localStorage.getItem('mcwx_widget_pos');
-        if (weatherPosStr) {
-          try {
-            const pos = JSON.parse(weatherPosStr);
-            weatherWidget.style.left = pos.left + 'px';
-            weatherWidget.style.top = pos.top + 'px';
-          } catch (e) {
-             weatherWidget.style.left = (mainRect.right + gap) + 'px';
-             weatherWidget.style.top = topPosition + 'px';
-          }
-        } else {
-          weatherWidget.style.left = (mainRect.right + gap) + 'px';
-          weatherWidget.style.top = topPosition + 'px';
-        }
+  function read(key){
+    try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; }
+  }
+  function write(key, val){
+    localStorage.setItem(key, JSON.stringify(val));
+  }
 
-        const passwordPosStr = localStorage.getItem('pwd_widget_pos');
-        if (passwordPosStr) {
-          try {
-            const pos = JSON.parse(passwordPosStr);
-            passwordWidget.style.left = pos.left + 'px';
-            passwordWidget.style.top = pos.top + 'px';
-          } catch (e) {
-            passwordWidget.style.left = (mainRect.left - widgetWidth - gap) + 'px';
-            passwordWidget.style.top = topPosition + 'px';
-          }
-        } else {
-          passwordWidget.style.left = (mainRect.left - widgetWidth - gap) + 'px';
-          passwordWidget.style.top = topPosition + 'px';
-        }
-        
-        weatherWidget.style.visibility = 'visible';
-        weatherWidget.style.opacity = '1';
-        passwordWidget.style.visibility = 'visible';
-        passwordWidget.style.opacity = '1';
-      }
+  function positionWidgets(){
+    const a = getAnchorRect();
 
-      function onMouseDown(e, widget) {
-        if (coordForm.style.display === 'flex' && widget === weatherWidget) {
-          return;
-        }
-        if (e.target.closest('input, textarea, button, a, .mcwx-barbox')) {
-          return;
-        }
-        e.preventDefault();
-        isDragging = true;
-        activeWidget = widget;
-        offsetX = e.clientX - activeWidget.offsetLeft;
-        offsetY = e.clientY - activeWidget.offsetTop;
-        document.body.style.cursor = 'grabbing';
-        document.body.style.userSelect = 'none';
-      }
+    // Погода: по умолчанию справа от кнопки (правый край + GAP), верх — по верхнему краю кнопки
+    let wRel = read('mcwx_rel');
+    if(!wRel){
+      wRel = { dx: (a.right + GAP) - a.left, dy: 0 };
+    }
+    weatherWidget.style.left = (a.left + wRel.dx) + 'px';
+    weatherWidget.style.top  = (a.top  + wRel.dy) + 'px';
 
-      function onMouseMove(e) {
-        if (!isDragging || !activeWidget) return;
-        e.preventDefault();
-        const x = e.clientX - offsetX;
-        const y = e.clientY - offsetY;
-        activeWidget.style.left = x + 'px';
-        activeWidget.style.top = y + 'px';
-      }
+    // Пароли: по умолчанию слева от кнопки (левый край - ширина - GAP), верх — по верхнему краю кнопки
+    let pRel = read('pwd_rel');
+    if(!pRel){
+      const pw = passwordWidget.offsetWidth || 329; // ширина виджета из стилей .widget-base [file:1]
+      pRel = { dx: -pw - GAP, dy: 0 };
+    }
+    passwordWidget.style.left = (a.left + pRel.dx) + 'px';
+    passwordWidget.style.top  = (a.top  + pRel.dy) + 'px';
 
-      function onMouseUp() {
-        if (isDragging) {
-          savePositions();
-        }
-        isDragging = false;
-        activeWidget = null;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-      }
-      
-      // --- НОВАЯ ЛОГИКА ДЛЯ ПЕРЕМЕЩЕНИЯ КЛАВИАТУРОЙ ---
-      function handleKeyboardMove(e) {
-        // Двигаем виджет стрелками, только если открыта форма координат
-        if (coordForm.style.display !== 'flex') {
-          return;
-        }
+    weatherWidget.style.visibility = 'visible';
+    weatherWidget.style.opacity = '1';
+    passwordWidget.style.visibility = 'visible';
+    passwordWidget.style.opacity = '1';
+  }
 
-        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-          return;
-        }
-        
-        // Отменяем стандартное действие браузера (изменение числа в поле)
-        e.preventDefault();
+  function saveRelativeOffsets(){
+    const a = getAnchorRect();
+    const w = weatherWidget.getBoundingClientRect();
+    const p = passwordWidget.getBoundingClientRect();
+    write('mcwx_rel', { dx: w.left - a.left, dy: w.top - a.top });
+    write('pwd_rel',  { dx: p.left - a.left, dy: p.top - a.top });
+  }
 
-        let dx = 0, dy = 0;
-        if (e.key === 'ArrowUp') dy = -MOVE_STEP;
-        if (e.key === 'ArrowDown') dy = MOVE_STEP;
-        if (e.key === 'ArrowLeft') dx = -MOVE_STEP;
-        if (e.key === 'ArrowRight') dx = MOVE_STEP;
+  // Drag & drop с расчётом во viewport-координатах
+  let isDragging = false, active = null, offX = 0, offY = 0;
 
-        // Двигаем сам виджет погоды
-        weatherWidget.style.left = (weatherWidget.offsetLeft + dx) + 'px';
-        weatherWidget.style.top = (weatherWidget.offsetTop + dy) + 'px';
-      }
+  function onMouseDown(e, el){
+    if (coordForm && coordForm.style.display === 'flex' && el === weatherWidget) return; // не мешаем вводу [file:1]
+    if (e.target.closest('input, textarea, button, a, .mcwx-barbox')) return;            // не начинаем drag по интерактивным [file:1]
+    e.preventDefault();
+    isDragging = true; active = el;
+    const r = el.getBoundingClientRect();
+    offX = e.clientX - r.left;
+    offY = e.clientY - r.top;
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+  }
+  function onMouseMove(e){
+    if(!isDragging || !active) return;
+    e.preventDefault();
+    active.style.left = (e.clientX - offX) + 'px';
+    active.style.top  = (e.clientY - offY) + 'px';
+  }
+  function onMouseUp(){
+    if(!isDragging) return;
+    isDragging = false; active = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    saveRelativeOffsets();
+  }
 
-      // --- СЛУШАТЕЛИ СОБЫТИЙ ---
-      weatherWidget.addEventListener('mousedown', (e) => onMouseDown(e, weatherWidget));
-      passwordWidget.addEventListener('mousedown', (e) => onMouseDown(e, passwordWidget));
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+  // Клавиши-стрелки двигают погодный виджета на шаг, с сохранением относительных смещений
+  function handleKeyboardMove(e){
+    if (coordForm && coordForm.style.display === 'flex') return; // не мешаем вводу [file:1]
+    if (!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) return;
+    e.preventDefault();
+    const a = getAnchorRect();
+    let r = read('mcwx_rel') || { dx: (a.right + GAP) - a.left, dy: 0 };
+    if (e.key === 'ArrowUp')    r.dy -= MOVESTEP;
+    if (e.key === 'ArrowDown')  r.dy += MOVESTEP;
+    if (e.key === 'ArrowLeft')  r.dx -= MOVESTEP;
+    if (e.key === 'ArrowRight') r.dx += MOVESTEP;
+    write('mcwx_rel', r);
+    positionWidgets();
+  }
 
-      // Добавляем новый слушатель для клавиатуры
-      document.addEventListener('keydown', handleKeyboardMove);
+  window.addEventListener('resize', positionWidgets);
+  document.addEventListener('DOMContentLoaded', positionWidgets);
 
-      document.addEventListener('DOMContentLoaded', loadAndPositionWidgets);
-    })();
-  </script>
+  weatherWidget.addEventListener('mousedown', e => onMouseDown(e, weatherWidget));
+  passwordWidget.addEventListener('mousedown', e => onMouseDown(e, passwordWidget));
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+  document.addEventListener('keydown', handleKeyboardMove);
+})();
+</script>
+
 </body>
 
 
 </html>
-
-
