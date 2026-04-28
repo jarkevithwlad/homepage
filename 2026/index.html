@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Рабочий стол</title>
+
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@200;300;400;500;700&family=Outfit:wght@200;300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+:root{
+  --bg:#080808;
+  --card:rgba(18,18,18,.6);
+  --card-border:rgba(255,255,255,.07);
+  --accent:#c9943e;
+  --accent-dim:rgba(201,148,62,.25);
+  --accent-soft:rgba(201,148,62,.12);
+  --accent-strong:rgba(201,148,62,.92);
+  --text:#ede9e0;
+  --muted:#6e6a62;
+  --input-bg:#1a1a1a;
+  --input-border:rgba(255,255,255,.1);
+
+  --bg1:#c9943e;
+  --bg2:#8b3a3a;
+  --bg3:#5b7cff;
+
+  --grid-size:96px;
+  --grid-line:rgba(255,255,255,.07);
+
+  --enter-duration:700ms;
+  --enter-stagger:70ms;
+
+  --links-cols:3;
+  --links-item-w:96px;
+  --links-item-h:78px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Outfit',sans-serif;
+}
+
+/* === Плавное появление интерфейса: только прозрачность === */
+@keyframes bootFade{
+  from{opacity:0}
+  to{opacity:1}
+}
+.boot-item{
+  opacity:0;
+  animation:bootFade var(--enter-duration) cubic-bezier(.22,.61,.36,1) both;
+  animation-delay:var(--enter-delay,0ms);
+  will-change:opacity;
+}
+
+/* === Динамический фон === */
+.bg-default{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  background:var(--bg);
+  z-index:0;
+}
+.bg-blob{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(120px);
+  opacity:.13;
+  pointer-events:none;
+  will-change:transform;
+}
+.blob-1{
+  width:650px;
+  height:650px;
+  background:var(--bg1);
+  top:-25%;
+  left:-15%;
+  animation:bgDrift1 28s ease-in-out infinite alternate;
+}
+.blob-2{
+  width:500px;
+  height:500px;
+  background:var(--bg2);
+  bottom:-20%;
+  right:-10%;
+  animation:bgDrift2 34s ease-in-out infinite alternate;
+}
+.blob-3{
+  width:400px;
+  height:400px;
+  background:var(--bg3);
+  top:40%;
+  left:55%;
+  animation:bgDrift3 22s ease-in-out infinite alternate;
+}
+.bg-overlay{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.10) 0%, rgba(0,0,0,.55) 100%);
+}
+@keyframes bgDrift1{
+  0%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(30vw,20vh) scale(1.15)}
+  100%{transform:translate(15vw,40vh) scale(.9)}
+}
+@keyframes bgDrift2{
+  0%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(-25vw,-15vh) scale(1.1)}
+  100%{transform:translate(-10vw,-30vh) scale(.95)}
+}
+@keyframes bgDrift3{
+  0%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(-20vw,15vh) scale(1.2)}
+  100%{transform:translate(10vw,-10vh) scale(.85)}
+}
+
+/* === Сетка перетаскивания виджетов === */
+#drag-grid{
+  position:fixed;
+  inset:0;
+  z-index:9998;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s ease;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size:var(--grid-size) var(--grid-size);
+}
+#drag-grid.visible{opacity:1}
+
+/* === Кнопка настроек === */
+#settings-btn{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  z-index:9999;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  border:1px solid var(--card-border);
+  background:var(--card);
+  backdrop-filter:blur(12px);
+  color:var(--muted);
+  font-size:18px;
+  cursor:pointer;
+  transition:color .3s,transform .3s,border-color .3s,box-shadow .3s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#settings-btn:hover{
+  color:var(--accent);
+  transform:rotate(45deg);
+  border-color:var(--accent-dim);
+  box-shadow:0 0 20px rgba(0,0,0,.25);
+}
+
+/* === Оверлей настроек === */
+#settings-overlay{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(6px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .3s,visibility .3s;
+}
+#settings-overlay.open{
+  opacity:1;
+  visibility:visible;
+}
+#settings-panel{
+  position:relative;
+  background:#111;
+  border:1px solid var(--card-border);
+  border-radius:20px;
+  padding:26px 22px 22px;
+  width:100%;
+  max-width:760px;
+  max-height:84vh;
+  overflow-y:auto;
+  color:var(--text);
+}
+#settings-panel::-webkit-scrollbar{width:5px}
+#settings-panel::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.s-close{
+  position:absolute;
+  top:16px;
+  right:20px;
+  background:none;
+  border:none;
+  color:var(--muted);
+  font-size:20px;
+  cursor:pointer;
+  transition:color .2s;
+}
+.s-close:hover{color:var(--text)}
+
+.s-section{
+  margin-bottom:24px;
+  position:relative;
+}
+.s-section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.s-title{
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--accent);
+}
+.s-section-reset{
+  border:1px solid rgba(255,255,255,.08);
+  background:#1a1a1a;
+  color:#cfcfcf;
+  font-size:12px;
+  border-radius:8px;
+  padding:7px 10px;
+  cursor:pointer;
+  transition:border-color .2s,color .2s,background .2s;
+}
+.s-section-reset:hover{
+  border-color:var(--accent-dim);
+  color:#fff;
+  background:rgba(255,255,255,.04);
+}
+
+.s-row{
+  display:grid;
+  grid-template-columns:minmax(150px, 220px) 1fr auto;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.s-row.full{
+  grid-template-columns:1fr;
+}
+.s-label{
+  font-size:13.5px;
+  color:var(--text);
+  line-height:1.25;
+}
+.s-control{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  min-width:0;
+}
+.s-control.start{justify-content:flex-start}
+.s-input,.s-select,.s-textarea{
+  background:var(--input-bg);
+  border:1px solid var(--input-border);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:8px;
+  font-size:13px;
+  outline:none;
+  font-family:inherit;
+  transition:border-color .2s,box-shadow .2s;
+}
+.s-input:focus,.s-select:focus,.s-textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(255,255,255,.03);
+}
+.s-input{width:150px}
+.s-input.wide{width:100%}
+.s-select{width:170px;cursor:pointer}
+.s-color{
+  width:44px;
+  height:30px;
+  border:1px solid var(--input-border);
+  border-radius:6px;
+  cursor:pointer;
+  background:none;
+  padding:2px;
+}
+.s-range{
+  flex:1;
+  max-width:220px;
+  accent-color:var(--accent);
+}
+.s-range-val{
+  font-size:12px;
+  color:var(--muted);
+  min-width:38px;
+  text-align:right;
+}
+.s-btn{
+  background:var(--accent);
+  border:none;
+  color:#111;
+  padding:9px 18px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:inherit;
+  transition:filter .2s,transform .2s,box-shadow .2s;
+}
+.s-btn:hover{filter:brightness(1.1)}
+.s-btn:active{transform:translateY(1px)}
+.s-btn.secondary{
+  background:#222;
+  color:#ddd;
+  border:1px solid rgba(255,255,255,.08);
+}
+.s-reset{
+  min-width:38px;
+  height:34px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.08);
+  background:#191919;
+  color:#bcbcbc;
+  cursor:pointer;
+  transition:border-color .2s,color .2s,background .2s,transform .2s;
+}
+.s-reset:hover{
+  border-color:var(--accent-dim);
+  color:var(--accent);
+  background:rgba(255,255,255,.04);
+}
+.s-reset:active{transform:translateY(1px)}
+.s-help{
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.35;
+}
+.s-city-display{
+  font-size:13px;
+  color:var(--muted);
+  text-align:center;
+}
+.s-grid-two{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.s-links-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:10px;
+}
+.s-link-item{
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:8px;
+}
+.s-checkbox{
+  width:16px;
+  height:16px;
+  accent-color:var(--accent);
+  cursor:pointer;
+}
+.s-divider{
+  height:1px;
+  background:rgba(255,255,255,.06);
+  margin:12px 0;
+}
+
+/* === Переключатель === */
+.toggle{
+  position:relative;
+  width:40px;
+  height:22px;
+  background:#2a2a2a;
+  border-radius:11px;
+  cursor:pointer;
+  transition:background .3s;
+  flex-shrink:0;
+  border:none;
+}
+.toggle.on{background:var(--accent)}
+.toggle::after{
+  content:'';
+  position:absolute;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#fff;
+  top:2px;
+  left:2px;
+  transition:transform .3s;
+}
+.toggle.on::after{transform:translateX(18px)}
+
+/* === Виджеты === */
+.widget-base{
+  position:fixed;
+  z-index:10;
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-radius:16px;
+  color:var(--text);
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  user-select:none;
+  border:1px solid var(--card-border);
+  cursor:grab;
+  transition:box-shadow .25s,border-color .25s;
+}
+.widget-base:active{cursor:grabbing}
+.widget-base.dragging{
+  box-shadow:0 18px 50px rgba(0,0,0,.35);
+  border-color:rgba(255,255,255,.14);
+}
+.widget-base.hidden{display:none!important}
+.widget-title{
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:10px;
+  opacity:.92;
+}
+
+/* === Часы === */
+#clock-widget{
+  padding:20px 28px;
+  background:transparent;
+  backdrop-filter:none;
+  border:none;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+#clock-time{
+  font-family:'JetBrains Mono',monospace;
+  line-height:1;
+  letter-spacing:-3px;
+  transition:font-size .3s,color .3s,font-weight .3s;
+}
+#clock-date{
+  font-family:'Outfit',sans-serif;
+  margin-top:8px;
+  opacity:.55;
+  font-size:15px;
+  letter-spacing:.5px;
+  transition:font-size .3s,color .3s;
+}
+#clock-seconds-bar{
+  width:60%;
+  height:2px;
+  background:#222;
+  border-radius:1px;
+  margin-top:10px;
+  overflow:hidden;
+}
+#clock-seconds-fill{
+  height:100%;
+  background:var(--accent);
+  border-radius:1px;
+  transition:width .15s linear;
+}
+
+/* === Погода === */
+#weather-widget{
+  width:329px;
+  min-height:400px;
+}
+.wx-city{font-size:20px;font-weight:500;line-height:1.15}
+.wx-desc{font-size:13px;color:#fff;opacity:.78;text-align:right;font-weight:400}
+.wx-trow{display:flex;justify-content:space-between;align-items:flex-end;margin:4px 0 8px}
+.wx-top-right{display:flex;flex-direction:column;align-items:flex-end}
+.wx-temp{font-size:56px;line-height:1.06;font-weight:300;letter-spacing:-2px}
+.wx-range{font-size:12.5px;color:#fff;opacity:.65;text-align:right}
+
+.wx-hours{
+  display:flex;
+  align-items:stretch;
+  gap:6px;
+  height:128px;
+  min-height:128px;
+  max-height:128px;
+  margin:6px 0 10px;
+  padding:6px 0;
+  border-top:.5px solid rgba(255,255,255,.15);
+  border-bottom:.5px solid rgba(255,255,255,.15);
+  overflow:hidden;
+}
+.wx-chart-y{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  width:24px;
+  font-size:10.5px;
+  opacity:.75;
+  padding:2px 0 22px;
+  min-height:0;
+}
+.wx-chart-main{
+  flex:1;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) 16px;
+  row-gap:6px;
+  min-height:0;
+  overflow:hidden;
+}
+#wx-chart-svg{
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  position:relative;
+}
+.wx-time-labels{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  height:16px;
+  font-size:10.5px;
+  opacity:.75;
+  line-height:1;
+  overflow:hidden;
+}
+.wx-week-row{
+  display:flex;
+  align-items:center;
+  margin:0 0 3px;
+  justify-content:space-between;
+  font-size:12.5px;
+  min-height:22px;
+}
+.wx-wday{width:24px}
+.wx-wico{
+  width:20px;
+  height:20px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.wx-barbox{
+  flex:1;
+  margin:0 7px;
+  height:4px;
+  background:rgba(255,255,255,.08);
+  border-radius:2px;
+  position:relative;
+  overflow:hidden;
+}
+.wx-bar{
+  height:4px;
+  border-radius:2px;
+  background:rgba(255,255,255,.75);
+  position:absolute;
+  top:0;
+}
+.wx-mn{color:#fff;opacity:.55;width:22px;text-align:right;font-size:12px}
+.wx-mx{color:#fff;width:22px;text-align:left;font-size:12px}
+
+/* === Иконки погоды === */
+.wx-sun-g{animation:wx-sun 13s linear infinite;transform-origin:32px 32px}
+@keyframes wx-sun{to{transform:rotate(360deg)}}
+.wx-snow-g{animation:wx-snow-spin 25s linear infinite;transform-origin:32px 32px}
+@keyframes wx-snow-spin{to{transform:rotate(360deg)}}
+.wx-raindrop{animation:wx-fall 1.4s infinite linear}
+@keyframes wx-fall{
+  0%{transform:translate(4px,-15px);opacity:0}
+  30%{opacity:1}
+  100%{transform:translate(-8px,20px);opacity:0}
+}
+.wx-wind-g{animation:wx-wind 1.2s ease-in-out infinite alternate}
+@keyframes wx-wind{to{transform:translateX(-20px)}}
+.wx-flash{animation:wx-flash 1.5s infinite}
+@keyframes wx-flash{0%,100%{opacity:0}50%{opacity:1}}
+.wx-snow-fall{animation:wx-snowfall 2.2s linear infinite}
+@keyframes wx-snowfall{
+  0%{transform:translateY(-4px);opacity:.9}
+  80%{opacity:.7}
+  100%{transform:translateY(10px);opacity:0}
+}
+
+/* === Генератор паролей === */
+#password-widget{width:329px}
+.pg-title{font-size:14px;font-weight:600;margin-bottom:10px;opacity:.9}
+.pg-btns{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.pg-btns button{
+  flex:1 0 calc(20% - 4px);
+  min-width:46px;
+  height:30px;
+  background:#222;
+  border:1px solid rgba(255,255,255,.06);
+  color:#aaa;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:'JetBrains Mono',monospace;
+  transition:all .2s;
+}
+.pg-btns button:hover{background:#2a2a2a;color:#fff}
+.pg-btns button.active{background:var(--accent);color:#111;border-color:var(--accent)}
+.pg-checks{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.pg-checks label{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;color:rgba(255,255,255,.8)}
+.pg-checks input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px}
+.pg-output{
+  width:100%;
+  height:90px;
+  background:#111;
+  color:#ccc;
+  border:1px solid rgba(255,255,255,.06);
+  padding:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  resize:none;
+  border-radius:8px;
+  outline:none;
+  cursor:pointer;
+  transition:border-color .2s,background .2s;
+  word-break:break-all;
+}
+.pg-output:hover{border-color:rgba(255,255,255,.15)}
+.pg-output.copied{background:#1a2a1a;border-color:rgba(80,200,80,.3)}
+.pg-output::placeholder{color:#444}
+.pg-footer{text-align:center;font-size:10px;color:#444;margin-top:8px}
+
+/* === Виджет ссылок === */
+#links-widget{
+  width:auto;
+  min-width:220px;
+  min-height:120px;
+}
+.links-grid{
+  display:grid;
+  grid-template-columns:repeat(var(--links-cols), var(--links-item-w));
+  grid-auto-rows:var(--links-item-h);
+  gap:10px;
+  position:relative;
+  border-radius:12px;
+  align-content:start;
+  justify-content:start;
+}
+.links-grid.reorder-mode{
+  padding:2px;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size:calc(var(--links-item-w) + 10px) calc(var(--links-item-h) + 10px);
+  background-position:2px 2px;
+}
+.link-tile{
+  width:var(--links-item-w);
+  height:var(--links-item-h);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.04);
+  color:var(--text);
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:10px;
+  font-size:13px;
+  line-height:1.25;
+  transition:transform .15s,border-color .2s,background .2s,color .2s,box-shadow .2s,opacity .2s;
+  overflow:hidden;
+  word-break:break-word;
+  cursor:pointer;
+}
+.link-tile:hover{
+  transform:none;
+  border-color:var(--accent-strong);
+  background:var(--accent-soft);
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
+  color:#fff;
+}
+.link-tile.drop-target{
+  border-color:var(--accent-strong);
+  background:var(--accent-soft);
+  box-shadow:0 0 0 2px var(--accent-dim) inset;
+}
+.link-tile.dragging-link{
+  opacity:.45;
+}
+.links-empty{
+  font-size:12.5px;
+  color:var(--muted);
+  text-align:center;
+  padding:18px 10px;
+  border:1px dashed rgba(255,255,255,.1);
+  border-radius:12px;
+  min-width:220px;
+}
+
+@media (max-width: 860px){
+  #settings-panel{padding:24px 16px 18px}
+  .s-row{grid-template-columns:1fr}
+  .s-control{justify-content:flex-start}
+  .s-grid-two{grid-template-columns:1fr}
+  .s-link-item{grid-template-columns:1fr}
+}
+@media (max-width: 720px){
+  #password-widget,#weather-widget{width:min(92vw,360px)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .bg-blob,.wx-sun-g,.wx-snow-g,.wx-raindrop,.wx-wind-g,.wx-flash,.wx-snow-fall{animation:none!important}
+  #settings-panel,#settings-overlay,.widget-base,.boot-item,.link-tile{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-default">
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+</div>
+<div class="bg-overlay"></div>
+<div id="drag-grid"></div>
+
+<button id="settings-btn" class="boot-item" style="--enter-delay:80ms" aria-label="Настройки"><i class="fas fa-cog"></i></button>
+
+<div id="settings-overlay">
+  <div id="settings-panel">
+    <button class="s-close" id="s-close-btn" aria-label="Закрыть"><i class="fas fa-times"></i></button>
+
+    <div class="s-section">
+      <div class="s-section-head">
+        <div class="s-title">Интерфейс</div>
+        <button class="s-section-reset" data-section-reset="ui" type="button">Сбросить раздел</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Цвет акцента</span>
+        <div class="s-control">
+          <input type="color" class="s-color" id="s-ui-accent" value="#c9943e">
+        </div>
+        <button class="s-reset" data-reset="ui.accent" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Шаг сетки виджетов</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-grid-size" min="48" max="192" step="24" value="96">
+          <span class="s-range-val" id="s-grid-size-val">96</span>
+        </div>
+        <button class="s-reset" data-reset="ui.gridSize" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Длительность появления</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-enter-duration" min="0" max="2500" step="50" value="700">
+          <span class="s-range-val" id="s-enter-duration-val">700</span>
+        </div>
+        <button class="s-reset" data-reset="ui.enterDuration" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Задержка между элементами</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-enter-stagger" min="0" max="600" step="10" value="70">
+          <span class="s-range-val" id="s-enter-stagger-val">70</span>
+        </div>
+        <button class="s-reset" data-reset="ui.enterStagger" type="button" title="Сбросить">↺</button>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-head">
+        <div class="s-title">Фон</div>
+        <button class="s-section-reset" data-section-reset="background" type="button">Сбросить раздел</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Основной фон</span>
+        <div class="s-control">
+          <input type="color" class="s-color" id="s-bg-base" value="#080808">
+        </div>
+        <button class="s-reset" data-reset="background.base" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Элемент 1</span>
+        <div class="s-control">
+          <input type="color" class="s-color" id="s-bg1" value="#c9943e">
+        </div>
+        <button class="s-reset" data-reset="background.blob1" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Элемент 2</span>
+        <div class="s-control">
+          <input type="color" class="s-color" id="s-bg2" value="#8b3a3a">
+        </div>
+        <button class="s-reset" data-reset="background.blob2" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Элемент 3</span>
+        <div class="s-control">
+          <input type="color" class="s-color" id="s-bg3" value="#5b7cff">
+        </div>
+        <button class="s-reset" data-reset="background.blob3" type="button" title="Сбросить">↺</button>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-head">
+        <div class="s-title">Часы</div>
+        <button class="s-section-reset" data-section-reset="clock" type="button">Сбросить раздел</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Размер шрифта</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-clock-size" min="40" max="200" value="110">
+          <span class="s-range-val" id="s-clock-size-val">110</span>
+        </div>
+        <button class="s-reset" data-reset="clock.fontSize" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Шрифт</span>
+        <div class="s-control">
+          <select class="s-select" id="s-clock-font">
+            <option value="JetBrains Mono">JetBrains Mono</option>
+            <option value="Outfit">Outfit</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Courier New">Courier New</option>
+          </select>
+        </div>
+        <button class="s-reset" data-reset="clock.fontFamily" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Толщина</span>
+        <div class="s-control">
+          <select class="s-select" id="s-clock-weight">
+            <option value="200">200 — Тонкий</option>
+            <option value="300">300 — Лёгкий</option>
+            <option value="400">400 — Обычный</option>
+            <option value="500">500 — Средний</option>
+            <option value="700">700 — Жирный</option>
+          </select>
+        </div>
+        <button class="s-reset" data-reset="clock.fontWeight" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Цвет</span>
+        <div class="s-control">
+          <input type="color" class="s-color" id="s-clock-color" value="#ede9e0">
+        </div>
+        <button class="s-reset" data-reset="clock.color" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">24-часовой формат</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-clock-24h" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="clock.format24" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Показывать секунды</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-clock-sec" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="clock.showSeconds" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Показывать дату</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-clock-date" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="clock.showDate" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Формат даты</span>
+        <div class="s-control">
+          <select class="s-select" id="s-clock-datefmt">
+            <option value="full">Полный</option>
+            <option value="short">Короткий</option>
+            <option value="iso">ISO</option>
+          </select>
+        </div>
+        <button class="s-reset" data-reset="clock.dateFormat" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Размер даты</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-clock-datesize" min="10" max="28" value="15">
+          <span class="s-range-val" id="s-clock-datesize-val">15</span>
+        </div>
+        <button class="s-reset" data-reset="clock.dateSize" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Полоса секунд</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-clock-bar" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="clock.showBar" type="button" title="Сбросить">↺</button>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-head">
+        <div class="s-title">Погода</div>
+        <button class="s-section-reset" data-section-reset="weather" type="button">Сбросить раздел</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Широта</span>
+        <div class="s-control">
+          <input type="number" class="s-input" id="s-wx-lat" step="any" placeholder="53.9">
+        </div>
+        <button class="s-reset" data-reset="weather.lat" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Долгота</span>
+        <div class="s-control">
+          <input type="number" class="s-input" id="s-wx-lon" step="any" placeholder="27.5">
+        </div>
+        <button class="s-reset" data-reset="weather.lon" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Город</span>
+        <div class="s-control start">
+          <div class="s-city-display" id="s-wx-city-display">Минск</div>
+        </div>
+        <button class="s-reset" data-reset="weather.city" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row full">
+        <div class="s-control start">
+          <button class="s-btn" id="s-wx-apply" type="button">Применить координаты</button>
+        </div>
+      </div>
+
+      <div class="s-divider"></div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: город</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-city">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.city" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: описание</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-desc">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.desc" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: температура</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-temp">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.temp" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: диапазон</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-range">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.range" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: иконка</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-icon">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.icon" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: график температуры</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-chart-temp">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.chartTemp" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: график осадков</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-chart-precip">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.chartPrecip" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Акцент: полосы недели</span>
+        <div class="s-control start">
+          <input class="s-checkbox" type="checkbox" id="s-wx-acc-week-bars">
+        </div>
+        <button class="s-reset" data-reset="weather.accentize.weekBars" type="button" title="Сбросить">↺</button>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-head">
+        <div class="s-title">Кнопки</div>
+        <button class="s-section-reset" data-section-reset="links" type="button">Сбросить раздел</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Кнопок в ширину</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-links-columns" min="1" max="8" step="1" value="3">
+          <span class="s-range-val" id="s-links-columns-val">3</span>
+        </div>
+        <button class="s-reset" data-reset="links.layout.columns" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Ширина кнопки</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-links-item-width" min="70" max="220" step="2" value="96">
+          <span class="s-range-val" id="s-links-item-width-val">96</span>
+        </div>
+        <button class="s-reset" data-reset="links.layout.itemWidth" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Высота кнопки</span>
+        <div class="s-control">
+          <input type="range" class="s-range" id="s-links-item-height" min="42" max="160" step="2" value="78">
+          <span class="s-range-val" id="s-links-item-height-val">78</span>
+        </div>
+        <button class="s-reset" data-reset="links.layout.itemHeight" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row full">
+        <div class="s-help">Кнопки можно перетаскивать прямо внутри виджета. Они меняются местами по внутренней сетке и порядок сохраняется.</div>
+      </div>
+
+      <div class="s-grid-two">
+        <input class="s-input wide" id="s-link-title" type="text" placeholder="Название">
+        <input class="s-input wide" id="s-link-url" type="text" placeholder="https://example.com">
+      </div>
+      <div style="text-align:center;margin-top:10px">
+        <button class="s-btn" id="s-link-add" type="button">Добавить кнопку</button>
+      </div>
+      <div class="s-links-list" id="s-links-list"></div>
+    </div>
+
+    <div class="s-section" style="margin-bottom:0">
+      <div class="s-section-head">
+        <div class="s-title">Виджеты</div>
+        <button class="s-section-reset" data-section-reset="widgets" type="button">Сбросить раздел</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Часы</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-show-clock" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="widgets.clock" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Погода</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-show-weather" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="widgets.weather" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Генератор паролей</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-show-password" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="widgets.password" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row">
+        <span class="s-label">Кнопки</span>
+        <div class="s-control">
+          <button class="toggle on" id="s-show-links" type="button"></button>
+        </div>
+        <button class="s-reset" data-reset="widgets.links" type="button" title="Сбросить">↺</button>
+      </div>
+
+      <div class="s-row full">
+        <div class="s-control start">
+          <button class="s-btn secondary" id="s-reset-positions" type="button">Сбросить позиции виджетов</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="clock-widget" class="widget-base boot-item" style="--enter-delay:120ms" data-widget-id="clock">
+  <div id="clock-time">00:00</div>
+  <div id="clock-date"></div>
+  <div id="clock-seconds-bar"><div id="clock-seconds-fill"></div></div>
+</div>
+
+<div id="weather-widget" class="widget-base boot-item" style="--enter-delay:190ms" data-widget-id="weather">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">
+    <div class="wx-city" id="wx-city">Загрузка...</div>
+    <div class="wx-desc" id="wx-desc">—</div>
+  </div>
+  <div class="wx-trow">
+    <div class="wx-temp" id="wx-temp">--°</div>
+    <div class="wx-top-right">
+      <div id="wx-main-icon"></div>
+      <div class="wx-range" id="wx-range">↓ --° ↑ --°</div>
+    </div>
+  </div>
+  <div class="wx-hours" id="wx-hours">
+    <div class="wx-chart-y">
+      <span id="wx-chart-max">--°</span>
+      <span id="wx-chart-min">--°</span>
+    </div>
+    <div class="wx-chart-main">
+      <div id="wx-chart-svg"></div>
+      <div class="wx-time-labels" id="wx-time-labels"></div>
+    </div>
+  </div>
+  <div id="wx-week"></div>
+</div>
+
+<div id="password-widget" class="widget-base boot-item" style="--enter-delay:260ms" data-widget-id="password">
+  <div class="pg-title">Генератор паролей</div>
+  <div class="pg-btns" id="pg-btns">
+    <button data-v="4" type="button">4</button>
+    <button data-v="8" class="active" type="button">8</button>
+    <button data-v="12" type="button">12</button>
+    <button data-v="16" type="button">16</button>
+    <button data-v="24" type="button">24</button>
+    <button data-v="48" type="button">48</button>
+    <button data-v="64" type="button">64</button>
+    <button data-v="128" type="button">128</button>
+    <button data-v="256" type="button">256</button>
+    <button data-v="512" type="button">512</button>
+  </div>
+  <div class="pg-checks">
+    <label><input type="checkbox" id="pg-lower" checked> Строчные (a-z)</label>
+    <label><input type="checkbox" id="pg-upper" checked> Заглавные (A-Z)</label>
+    <label><input type="checkbox" id="pg-nums" checked> Цифры (0-9)</label>
+    <label><input type="checkbox" id="pg-syms" checked> Символы (!@#$...)</label>
+  </div>
+  <textarea class="pg-output" id="pg-output" readonly placeholder="Нажмите, чтобы скопировать"></textarea>
+  <div class="pg-footer">Копируется при клике</div>
+</div>
+
+<div id="links-widget" class="widget-base boot-item" style="--enter-delay:330ms" data-widget-id="links">
+  <div class="links-grid" id="links-grid"></div>
+</div>
+
+<script>
+const DEFAULTS = {
+  version: 4,
+  ui: {
+    accent: '#c9943e',
+    gridSize: 96,
+    enterDuration: 700,
+    enterStagger: 70
+  },
+  background: {
+    base: '#080808',
+    blob1: '#c9943e',
+    blob2: '#8b3a3a',
+    blob3: '#5b7cff'
+  },
+  clock: {
+    fontSize: 110,
+    fontFamily: 'JetBrains Mono',
+    color: '#ede9e0',
+    fontWeight: '300',
+    format24: true,
+    showSeconds: true,
+    showDate: true,
+    dateFormat: 'full',
+    dateSize: 15,
+    showBar: true
+  },
+  weather: {
+    lat: 53.905876,
+    lon: 27.543439,
+    city: 'Минск',
+    accentize: {
+      city: false,
+      desc: false,
+      temp: false,
+      range: false,
+      icon: false,
+      chartTemp: false,
+      chartPrecip: false,
+      weekBars: false
+    }
+  },
+  widgets: {
+    clock: true,
+    weather: true,
+    password: true,
+    links: true
+  },
+  positions: {
+    clock: { x: 0, y: 48, mode: 'top-center' },
+    weather: { x: -380, y: 130, mode: 'center-offset' },
+    password: { x: 0, y: 130, mode: 'center-offset' },
+    links: { x: 380, y: 130, mode: 'center-offset' }
+  },
+  links: {
+    layout: {
+      columns: 3,
+      itemWidth: 96,
+      itemHeight: 78
+    },
+    items: [
+      { title: 'Perplexity', url: 'https://www.perplexity.ai/' },
+      { title: 'GitHub', url: 'https://github.com/' },
+      { title: 'YouTube', url: 'https://youtube.com/' },
+      { title: 'Telegram', url: 'https://web.telegram.org/' }
+    ]
+  }
+};
+
+function deepClone(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+function deepMerge(base, extra){
+  const out = deepClone(base);
+  function merge(target, source){
+    for (const key in source){
+      const sv = source[key];
+      if (Array.isArray(sv)){
+        target[key] = sv;
+      } else if (sv && typeof sv === 'object'){
+        if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) target[key] = {};
+        merge(target[key], sv);
+      } else {
+        target[key] = sv;
+      }
+    }
+  }
+  if (extra && typeof extra === 'object') merge(out, extra);
+  return out;
+}
+function getByPath(obj, path){
+  return path.split('.').reduce((acc, key) => acc?.[key], obj);
+}
+function setByPath(obj, path, value){
+  const keys = path.split('.');
+  const last = keys.pop();
+  let cur = obj;
+  keys.forEach(key => {
+    if (!cur[key] || typeof cur[key] !== 'object') cur[key] = {};
+    cur = cur[key];
+  });
+  cur[last] = value;
+}
+function clamp(v, min, max){
+  return Math.max(min, Math.min(max, v));
+}
+function hexToRgb(hex){
+  const clean = String(hex).replace('#','').trim();
+  const full = clean.length === 3 ? clean.split('').map(x => x + x).join('') : clean;
+  const num = parseInt(full, 16);
+  return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+}
+function rgbaFromHex(hex, alpha){
+  const {r,g,b} = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function setCSSVar(name, value){
+  document.documentElement.style.setProperty(name, value);
+}
+function normalizeUrl(url){
+  const trimmed = (url || '').trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return 'https://' + trimmed;
+}
+function escapeHTML(str){
+  return String(str)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+function swapArrayItems(arr, i, j){
+  const tmp = arr[i];
+  arr[i] = arr[j];
+  arr[j] = tmp;
+}
+
+function loadSettings(){
+  try{
+    const raw = JSON.parse(localStorage.getItem('dw_settings_v4'));
+    const merged = deepMerge(DEFAULTS, raw || {});
+
+    if (Array.isArray(merged.links)) {
+      merged.links = {
+        layout: deepClone(DEFAULTS.links.layout),
+        items: merged.links
+      };
+    }
+
+    if (!merged.links || typeof merged.links !== 'object') merged.links = deepClone(DEFAULTS.links);
+    if (!merged.links.layout || typeof merged.links.layout !== 'object') merged.links.layout = deepClone(DEFAULTS.links.layout);
+    if (!Array.isArray(merged.links.items)) merged.links.items = deepClone(DEFAULTS.links.items);
+
+    if (!merged.ui || typeof merged.ui !== 'object') merged.ui = deepClone(DEFAULTS.ui);
+    if (!Number.isFinite(+merged.ui.gridSize) || merged.ui.gridSize < 48) merged.ui.gridSize = DEFAULTS.ui.gridSize;
+    if (!Number.isFinite(+merged.ui.enterDuration)) merged.ui.enterDuration = DEFAULTS.ui.enterDuration;
+    if (!Number.isFinite(+merged.ui.enterStagger)) merged.ui.enterStagger = DEFAULTS.ui.enterStagger;
+
+    if (!raw || !raw.version || raw.version < 4){
+      if (!merged.ui || !merged.ui.gridSize || merged.ui.gridSize < 96) merged.ui.gridSize = 96;
+      if (!merged.ui.enterDuration && merged.ui.enterDuration !== 0) merged.ui.enterDuration = DEFAULTS.ui.enterDuration;
+      if (!merged.ui.enterStagger && merged.ui.enterStagger !== 0) merged.ui.enterStagger = DEFAULTS.ui.enterStagger;
+      merged.version = 4;
+    }
+
+    return merged;
+  }catch{
+    return deepClone(DEFAULTS);
+  }
+}
+function saveSettings(){
+  settings.version = DEFAULTS.version;
+  localStorage.setItem('dw_settings_v4', JSON.stringify(settings));
+}
+
+let settings = loadSettings();
+let weatherCache = null;
+let linkDragIndex = null;
+let bootStarted = false;
+
+/* =========================================
+   Панель настроек
+   ========================================= */
+const sOverlay = document.getElementById('settings-overlay');
+const sBtn = document.getElementById('settings-btn');
+const sClose = document.getElementById('s-close-btn');
+
+function openSettings(){
+  sOverlay.classList.add('open');
+  syncSettingsUI();
+}
+function closeSettings(){
+  sOverlay.classList.remove('open');
+}
+
+sBtn.addEventListener('click', openSettings);
+sClose.addEventListener('click', closeSettings);
+sOverlay.addEventListener('click', e => {
+  if (e.target === sOverlay) closeSettings();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSettings();
+});
+
+function setToggle(id, val){
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('on', !!val);
+}
+function bindToggle(id, obj, key, cb){
+  document.getElementById(id).addEventListener('click', function(){
+    this.classList.toggle('on');
+    obj[key] = this.classList.contains('on');
+    saveSettings();
+    if (cb) cb();
+  });
+}
+function bindCheckbox(id, obj, key, cb){
+  document.getElementById(id).addEventListener('change', function(){
+    obj[key] = this.checked;
+    saveSettings();
+    if (cb) cb();
+  });
+}
+
+function syncSettingsUI(){
+  const c = settings.clock;
+  const w = settings.weather;
+  const wg = settings.widgets;
+  const ui = settings.ui;
+  const bg = settings.background;
+  const ll = settings.links.layout;
+
+  document.getElementById('s-ui-accent').value = ui.accent;
+  document.getElementById('s-grid-size').value = ui.gridSize;
+  document.getElementById('s-grid-size-val').textContent = ui.gridSize;
+  document.getElementById('s-enter-duration').value = ui.enterDuration;
+  document.getElementById('s-enter-duration-val').textContent = ui.enterDuration;
+  document.getElementById('s-enter-stagger').value = ui.enterStagger;
+  document.getElementById('s-enter-stagger-val').textContent = ui.enterStagger;
+
+  document.getElementById('s-bg-base').value = bg.base;
+  document.getElementById('s-bg1').value = bg.blob1;
+  document.getElementById('s-bg2').value = bg.blob2;
+  document.getElementById('s-bg3').value = bg.blob3;
+
+  document.getElementById('s-clock-size').value = c.fontSize;
+  document.getElementById('s-clock-size-val').textContent = c.fontSize;
+  document.getElementById('s-clock-font').value = c.fontFamily;
+  document.getElementById('s-clock-weight').value = c.fontWeight;
+  document.getElementById('s-clock-color').value = c.color;
+  setToggle('s-clock-24h', c.format24);
+  setToggle('s-clock-sec', c.showSeconds);
+  setToggle('s-clock-date', c.showDate);
+  document.getElementById('s-clock-datefmt').value = c.dateFormat;
+  document.getElementById('s-clock-datesize').value = c.dateSize;
+  document.getElementById('s-clock-datesize-val').textContent = c.dateSize;
+  setToggle('s-clock-bar', c.showBar);
+
+  document.getElementById('s-wx-lat').value = w.lat;
+  document.getElementById('s-wx-lon').value = w.lon;
+  document.getElementById('s-wx-city-display').textContent = w.city;
+  document.getElementById('s-wx-acc-city').checked = !!w.accentize.city;
+  document.getElementById('s-wx-acc-desc').checked = !!w.accentize.desc;
+  document.getElementById('s-wx-acc-temp').checked = !!w.accentize.temp;
+  document.getElementById('s-wx-acc-range').checked = !!w.accentize.range;
+  document.getElementById('s-wx-acc-icon').checked = !!w.accentize.icon;
+  document.getElementById('s-wx-acc-chart-temp').checked = !!w.accentize.chartTemp;
+  document.getElementById('s-wx-acc-chart-precip').checked = !!w.accentize.chartPrecip;
+  document.getElementById('s-wx-acc-week-bars').checked = !!w.accentize.weekBars;
+
+  document.getElementById('s-links-columns').value = ll.columns;
+  document.getElementById('s-links-columns-val').textContent = ll.columns;
+  document.getElementById('s-links-item-width').value = ll.itemWidth;
+  document.getElementById('s-links-item-width-val').textContent = ll.itemWidth;
+  document.getElementById('s-links-item-height').value = ll.itemHeight;
+  document.getElementById('s-links-item-height-val').textContent = ll.itemHeight;
+
+  setToggle('s-show-clock', wg.clock);
+  setToggle('s-show-weather', wg.weather);
+  setToggle('s-show-password', wg.password);
+  setToggle('s-show-links', wg.links);
+
+  renderLinksSettingsList();
+}
+
+/* =========================================
+   Сброс настроек
+   ========================================= */
+function resetSetting(path){
+  const value = deepClone(getByPath(DEFAULTS, path));
+  setByPath(settings, path, value);
+  saveSettings();
+
+  if (path === 'weather.lat' || path === 'weather.lon'){
+    document.getElementById('s-wx-lat').value = settings.weather.lat;
+    document.getElementById('s-wx-lon').value = settings.weather.lon;
+    getCityName(settings.weather.lat, settings.weather.lon, city => {
+      settings.weather.city = city;
+      saveSettings();
+      syncSettingsUI();
+      fetchWeather();
+    });
+    return;
+  }
+
+  if (path.startsWith('weather.')){
+    syncSettingsUI();
+    renderWeatherFromCache();
+  } else if (path.startsWith('ui.')){
+    applyAppTheme();
+    syncSettingsUI();
+    if (path === 'ui.gridSize') snapAllWidgetsToGrid();
+  } else if (path.startsWith('background.')){
+    applyBackgroundSettings();
+    syncSettingsUI();
+  } else if (path.startsWith('clock.')){
+    applyClockStyle();
+    syncSettingsUI();
+  } else if (path.startsWith('widgets.')){
+    applyWidgetVisibility();
+    syncSettingsUI();
+  } else if (path.startsWith('links.')){
+    renderLinksWidget();
+    renderLinksSettingsList();
+    syncSettingsUI();
+  } else {
+    applyEverything();
+    syncSettingsUI();
+  }
+}
+function resetSection(section){
+  settings[section] = deepClone(DEFAULTS[section]);
+  saveSettings();
+
+  if (section === 'weather'){
+    syncSettingsUI();
+    fetchWeather();
+    return;
+  }
+
+  if (section === 'links'){
+    renderLinksWidget();
+    renderLinksSettingsList();
+  }
+
+  applyEverything();
+  syncSettingsUI();
+}
+document.querySelectorAll('[data-reset]').forEach(btn => {
+  btn.addEventListener('click', () => resetSetting(btn.dataset.reset));
+});
+document.querySelectorAll('[data-section-reset]').forEach(btn => {
+  btn.addEventListener('click', () => resetSection(btn.dataset.sectionReset));
+});
+
+/* =========================================
+   Тема и фон
+   ========================================= */
+function applyAccentColor(){
+  setCSSVar('--accent', settings.ui.accent);
+  setCSSVar('--accent-dim', rgbaFromHex(settings.ui.accent, .25));
+  setCSSVar('--accent-soft', rgbaFromHex(settings.ui.accent, .12));
+  setCSSVar('--accent-strong', rgbaFromHex(settings.ui.accent, .92));
+}
+function applyBackgroundSettings(){
+  setCSSVar('--bg', settings.background.base);
+  setCSSVar('--bg1', settings.background.blob1);
+  setCSSVar('--bg2', settings.background.blob2);
+  setCSSVar('--bg3', settings.background.blob3);
+}
+function applyGridSettings(){
+  setCSSVar('--grid-size', settings.ui.gridSize + 'px');
+}
+function applyBootItemDelays(){
+  const step = Math.max(0, Number(settings.ui.enterStagger) || 0);
+  document.querySelectorAll('.boot-item').forEach((el, index) => {
+    el.style.setProperty('--enter-delay', `${index * step}ms`);
+  });
+}
+function restartBootAnimations(){
+  document.querySelectorAll('.boot-item').forEach(el => {
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+  });
+}
+function applyEnterTiming(restart = false){
+  setCSSVar('--enter-duration', settings.ui.enterDuration + 'ms');
+  setCSSVar('--enter-stagger', settings.ui.enterStagger + 'ms');
+  applyBootItemDelays();
+  if (restart) restartBootAnimations();
+}
+function applyAppTheme(){
+  applyAccentColor();
+  applyBackgroundSettings();
+  applyGridSettings();
+  applyEnterTiming(false);
+}
+function applyEverything(){
+  applyAppTheme();
+  applyClockStyle();
+  applyWidgetVisibility();
+  renderLinksWidget();
+  renderWeatherFromCache();
+}
+
+document.getElementById('s-ui-accent').addEventListener('input', function(){
+  settings.ui.accent = this.value;
+  saveSettings();
+  applyAccentColor();
+  renderLinksWidget();
+  renderWeatherFromCache();
+});
+
+const sGridSize = document.getElementById('s-grid-size');
+const sGridSizeVal = document.getElementById('s-grid-size-val');
+sGridSize.addEventListener('input', () => {
+  settings.ui.gridSize = +sGridSize.value;
+  sGridSizeVal.textContent = sGridSize.value;
+  saveSettings();
+  applyGridSettings();
+  snapAllWidgetsToGrid();
+});
+
+const sEnterDuration = document.getElementById('s-enter-duration');
+const sEnterDurationVal = document.getElementById('s-enter-duration-val');
+const sEnterStagger = document.getElementById('s-enter-stagger');
+const sEnterStaggerVal = document.getElementById('s-enter-stagger-val');
+sEnterDuration.addEventListener('input', () => {
+  settings.ui.enterDuration = +sEnterDuration.value;
+  sEnterDurationVal.textContent = sEnterDuration.value;
+  saveSettings();
+  applyEnterTiming(true);
+});
+sEnterStagger.addEventListener('input', () => {
+  settings.ui.enterStagger = +sEnterStagger.value;
+  sEnterStaggerVal.textContent = sEnterStagger.value;
+  saveSettings();
+  applyEnterTiming(true);
+});
+
+['s-bg-base','s-bg1','s-bg2','s-bg3'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function(){
+    if (id === 's-bg-base') settings.background.base = this.value;
+    if (id === 's-bg1') settings.background.blob1 = this.value;
+    if (id === 's-bg2') settings.background.blob2 = this.value;
+    if (id === 's-bg3') settings.background.blob3 = this.value;
+    saveSettings();
+    applyBackgroundSettings();
+  });
+});
+
+/* =========================================
+   Часы
+   ========================================= */
+const clockTime = document.getElementById('clock-time');
+const clockDate = document.getElementById('clock-date');
+const clockBar = document.getElementById('clock-seconds-fill');
+const DAYS_FULL = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+function applyClockStyle(){
+  const c = settings.clock;
+  clockTime.style.fontSize = c.fontSize + 'px';
+  clockTime.style.fontFamily = `'${c.fontFamily}', monospace`;
+  clockTime.style.fontWeight = c.fontWeight;
+  clockTime.style.color = c.color;
+  clockDate.style.fontSize = c.dateSize + 'px';
+  clockDate.style.color = c.color;
+  clockDate.style.display = c.showDate ? '' : 'none';
+  document.getElementById('clock-seconds-bar').style.display = c.showBar ? '' : 'none';
+}
+function tickClock(){
+  const now = new Date();
+  const c = settings.clock;
+  let h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+  let suffix = '';
+
+  if (!c.format24){
+    suffix = h >= 12 ? ' PM' : ' AM';
+    h = h % 12 || 12;
+  }
+
+  let t = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+  if (c.showSeconds) t += ':' + String(s).padStart(2,'0');
+  t += suffix;
+  clockTime.textContent = t;
+
+  if (c.showDate){
+    let d;
+    if (c.dateFormat === 'full') d = DAYS_FULL[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+    else if (c.dateFormat === 'short') d = String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
+    else d = now.toISOString().split('T')[0];
+    clockDate.textContent = d;
+  }
+
+  if (c.showBar){
+    const pct = ((s + now.getMilliseconds()/1000) / 60) * 100;
+    clockBar.style.width = pct + '%';
+  }
+
+  requestAnimationFrame(tickClock);
+}
+
+const sClockSize = document.getElementById('s-clock-size');
+const sClockSizeVal = document.getElementById('s-clock-size-val');
+sClockSize.addEventListener('input', () => {
+  settings.clock.fontSize = +sClockSize.value;
+  sClockSizeVal.textContent = sClockSize.value;
+  saveSettings();
+  applyClockStyle();
+});
+document.getElementById('s-clock-font').addEventListener('change', function(){
+  settings.clock.fontFamily = this.value;
+  saveSettings();
+  applyClockStyle();
+});
+document.getElementById('s-clock-weight').addEventListener('change', function(){
+  settings.clock.fontWeight = this.value;
+  saveSettings();
+  applyClockStyle();
+});
+document.getElementById('s-clock-color').addEventListener('input', function(){
+  settings.clock.color = this.value;
+  saveSettings();
+  applyClockStyle();
+});
+bindToggle('s-clock-24h', settings.clock, 'format24');
+bindToggle('s-clock-sec', settings.clock, 'showSeconds');
+bindToggle('s-clock-date', settings.clock, 'showDate', () => {
+  document.getElementById('clock-date').style.display = settings.clock.showDate ? '' : 'none';
+});
+document.getElementById('s-clock-datefmt').addEventListener('change', function(){
+  settings.clock.dateFormat = this.value;
+  saveSettings();
+});
+const sDateSize = document.getElementById('s-clock-datesize');
+const sDateSizeVal = document.getElementById('s-clock-datesize-val');
+sDateSize.addEventListener('input', () => {
+  settings.clock.dateSize = +sDateSize.value;
+  sDateSizeVal.textContent = sDateSize.value;
+  saveSettings();
+  applyClockStyle();
+});
+bindToggle('s-clock-bar', settings.clock, 'showBar', () => {
+  document.getElementById('clock-seconds-bar').style.display = settings.clock.showBar ? '' : 'none';
+});
+
+/* =========================================
+   Погода
+   ========================================= */
+const WX_CODES = {
+  0:['Ясно','sun'], 1:['Переменная облачность','cloud-sun'], 2:['Малооблачно','cloud-sun'],
+  3:['Пасмурно','cloud'], 18:['Шквал','wind'], 45:['Туман','fog'], 48:['Изморозь','fog'],
+  51:['Морось','light-rain'], 53:['Морось','light-rain'], 55:['Сильная морось','heavy-rain'],
+  56:['Ледяная морось','freezing-rain'], 57:['Ледяная морось','freezing-rain'],
+  61:['Небольшой дождь','light-rain'], 63:['Дождь','heavy-rain'], 65:['Сильный дождь','heavy-rain'],
+  66:['Ледяной дождь','freezing-rain'], 67:['Ледяной дождь','freezing-rain'],
+  71:['Небольшой снег','snow'], 73:['Снег','snow'], 75:['Снегопад','snow'],
+  77:['Снежные зёрна','snow'], 80:['Ливень','heavy-rain'], 81:['Сильный ливень','heavy-rain'],
+  82:['Очень сильный ливень','heavy-rain'], 85:['Снегопад','snow'], 86:['Сильный снегопад','snow'],
+  95:['Гроза','thunder'], 96:['Гроза с градом','thunder'], 99:['Сильная гроза','thunder']
+};
+
+function wxIcon(type, sz, color = '#fff'){
+  const s = `width="${sz}" height="${sz}" style="vertical-align:middle"`;
+  const cloud = `d="M17 38C12 38 8 30 15 25C18 18 25 15 32 18C40 12 50 15 52 25C60 30 55 38 47 38Z"`;
+  const sunRays = `<circle cx="32" cy="32" r="8" fill="${color}"/><path d="M32 15V8M32 50V57M15 32H8M57 32H50M22 22L17 17M47 47L52 52M22 47L17 52M47 22L52 17" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/>`;
+  const d1 = `<line class="wx-raindrop" x1="22" y1="45" x2="18" y2="55" stroke="${color}" stroke-width="4.5" stroke-linecap="round"/>`;
+  const d2 = `<line class="wx-raindrop" x1="32" y1="45" x2="28" y2="55" stroke="${color}" stroke-width="4.5" stroke-linecap="round" style="animation-delay:.5s"/>`;
+  const d3 = `<line class="wx-raindrop" x1="42" y1="45" x2="38" y2="55" stroke="${color}" stroke-width="4.5" stroke-linecap="round" style="animation-delay:1s"/>`;
+  const glow = `<defs><filter id="wxglow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  const bolt = `<path class="wx-flash" d="M38 25L28 40 34 40 24 55 42 38 36 38Z" fill="${color}" filter="url(#wxglow)"/>`;
+
+  if (type === 'sun') return `<svg ${s} viewBox="0 0 64 64"><g class="wx-sun-g">${sunRays}</g></svg>`;
+  if (type === 'cloud-sun') return `<svg ${s} viewBox="0 0 64 64"><g class="wx-sun-g" transform="translate(0,6) scale(.85)">${sunRays}</g><path fill="${color}" opacity=".75" ${cloud}/></svg>`;
+  if (type === 'cloud') return `<svg ${s} viewBox="0 0 64 64"><path fill="${color}" opacity=".75" ${cloud}/></svg>`;
+  if (type === 'light-rain') return `<svg ${s} viewBox="0 0 64 64"><path fill="${color}" opacity=".55" ${cloud}/>${d2}${d3}</svg>`;
+  if (type === 'heavy-rain') return `<svg ${s} viewBox="0 0 64 64"><path fill="${color}" opacity=".55" ${cloud}/>${d1}${d2}${d3}</svg>`;
+  if (type === 'freezing-rain') return `<svg ${s} viewBox="0 0 64 64"><path fill="${color}" opacity=".55" ${cloud}/>${d1}${d2}</svg>`;
+  if (type === 'snow'){
+    const flake = `<g class="wx-snow-g"><line x1="32" y1="10" x2="32" y2="54" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="21" x2="51" y2="43" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="43" x2="51" y2="21" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/><line x1="32" y1="16" x2="27" y2="22" stroke="${color}" stroke-width="2" stroke-linecap="round"/><line x1="32" y1="16" x2="37" y2="22" stroke="${color}" stroke-width="2" stroke-linecap="round"/><line x1="32" y1="48" x2="27" y2="42" stroke="${color}" stroke-width="2" stroke-linecap="round"/><line x1="32" y1="48" x2="37" y2="42" stroke="${color}" stroke-width="2" stroke-linecap="round"/></g>`;
+    return `<svg ${s} viewBox="0 0 64 64">${flake}</svg>`;
+  }
+  if (type === 'wind') return `<svg ${s} viewBox="0 0 64 64"><g class="wx-wind-g"><path d="M12 32Q28 26 44 32T76 32" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M8 44Q24 38 40 44T72 44" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round"/></g></svg>`;
+  if (type === 'fog') return `<svg ${s} viewBox="0 0 64 64"><path d="M14 38H50" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/><path d="M20 46H56" stroke="${color}" stroke-width="3.5" stroke-linecap="round"/><path d="M24 54H48" stroke="${color}" stroke-width="3" stroke-linecap="round" opacity=".6"/></svg>`;
+  if (type === 'thunder') return `<svg ${s} viewBox="0 0 64 64">${glow}<path fill="${color}" opacity=".35" ${cloud}/>${d1}${d3}${bolt}</svg>`;
+  return `<svg ${s} viewBox="0 0 64 64"><circle cx="32" cy="32" r="14" fill="none" stroke="${color}" stroke-width="2"/></svg>`;
+}
+
+function getCityName(lat, lon, cb){
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`)
+    .then(r => r.json())
+    .then(j => {
+      const a = j && j.address;
+      cb(a ? (a.city || a.town || a.village || a.settlement || a.county || 'Город') : 'Город');
+    })
+    .catch(() => cb('Город'));
+}
+
+function weatherAccentColor(enabled, fallback, alpha){
+  if (!enabled) return fallback;
+  return typeof alpha === 'number' ? rgbaFromHex(settings.ui.accent, alpha) : settings.ui.accent;
+}
+
+function renderWeatherData(d){
+  weatherCache = d;
+
+  if (d.error || !d.current_weather){
+    document.getElementById('wx-city').textContent = 'Ошибка';
+    document.getElementById('wx-desc').textContent = d.reason || 'Нет данных';
+    return;
+  }
+
+  const cw = d.current_weather;
+  const code = cw.weathercode;
+  const info = WX_CODES[code] || ['—', 'cloud'];
+
+  const cityEl = document.getElementById('wx-city');
+  const descEl = document.getElementById('wx-desc');
+  const tempEl = document.getElementById('wx-temp');
+  const rangeEl = document.getElementById('wx-range');
+  const iconEl = document.getElementById('wx-main-icon');
+
+  cityEl.textContent = settings.weather.city || 'Город';
+  descEl.textContent = info[0];
+  tempEl.textContent = Math.round(cw.temperature) + '°';
+  rangeEl.textContent = '↓ ' + Math.round(d.daily.temperature_2m_min[0]) + '°  ↑ ' + Math.round(d.daily.temperature_2m_max[0]) + '°';
+
+  cityEl.style.color = settings.weather.accentize.city ? settings.ui.accent : '';
+  descEl.style.color = settings.weather.accentize.desc ? settings.ui.accent : '';
+  tempEl.style.color = settings.weather.accentize.temp ? settings.ui.accent : '';
+  rangeEl.style.color = settings.weather.accentize.range ? settings.ui.accent : '';
+
+  iconEl.innerHTML = wxIcon(
+    info[1],
+    44,
+    settings.weather.accentize.icon ? settings.ui.accent : '#fff'
+  );
+
+  const now = new Date();
+  let idx = d.hourly.time.findIndex(t => new Date(t) >= now);
+  if (idx < 0) idx = 0;
+
+  const temps = d.hourly.temperature_2m.slice(idx, idx + 48);
+  const precips = d.hourly.precipitation_probability.slice(idx, idx + 48);
+  const times = d.hourly.time.slice(idx, idx + 48);
+
+  if (temps.length > 1){
+    const mn = Math.round(Math.min(...temps));
+    const mx = Math.round(Math.max(...temps));
+
+    document.getElementById('wx-chart-max').textContent = mx + '°';
+    document.getElementById('wx-chart-min').textContent = mn + '°';
+
+    requestAnimationFrame(() => {
+      const cont = document.getElementById('wx-chart-svg');
+      const w = Math.max(cont.clientWidth || 0, 200);
+      const h = Math.max(cont.clientHeight || 0, 84);
+      const plotTop = 4;
+      const plotBottom = Math.max(plotTop + 12, h - 12);
+      const plotHeight = Math.max(1, plotBottom - plotTop);
+      const tempMin = Math.min(...temps);
+      const tempMax = Math.max(...temps);
+      const tempRange = tempMax - tempMin || 1;
+      const tempPad = Math.max(1.5, tempRange * 0.22);
+      const scaledMin = tempMin - tempPad;
+      const scaledMax = tempMax + tempPad;
+      const scaledRange = scaledMax - scaledMin || 1;
+      const clipId = `wx-clip-${Date.now()}`;
+
+      const nt = t => clamp(plotBottom - ((t - scaledMin) / scaledRange * plotHeight), plotTop, plotBottom);
+      const np = p => clamp(plotBottom - ((Math.max(0, Math.min(100, p)) / 100) * plotHeight), plotTop, plotBottom);
+
+      let tp = `M0,${plotBottom}L0,${nt(temps[0]).toFixed(1)}`;
+      temps.forEach((t, i) => {
+        if (i) tp += `L${(i / (temps.length - 1) * w).toFixed(1)},${nt(t).toFixed(1)}`;
+      });
+      tp += `L${w},${plotBottom}Z`;
+
+      let pp = `M0,${plotBottom}L0,${np(precips[0]).toFixed(1)}`;
+      precips.forEach((p, i) => {
+        if (i) pp += `L${(i / (precips.length - 1) * w).toFixed(1)},${np(p).toFixed(1)}`;
+      });
+      pp += `L${w},${plotBottom}Z`;
+
+      const precipFill = weatherAccentColor(
+        settings.weather.accentize.chartPrecip,
+        'rgba(0,180,210,.4)',
+        .32
+      );
+      const tempFill = weatherAccentColor(
+        settings.weather.accentize.chartTemp,
+        'rgba(255,210,60,.4)',
+        .28
+      );
+
+      cont.innerHTML = `<svg viewBox="0 0 261 80" preserveAspectRatio="none" style="width:100%;height:100%;display:block;overflow:hidden"><defs><clipPath id="${clipId}"><rect x="0" y="${plotTop}" width="${w}" height="${plotHeight}"/></clipPath></defs><g clip-path="url(#${clipId})"><path d="${pp}" fill="${precipFill}"/><path d="${tp}" fill="${tempFill}"/></g></svg>`;
+    });
+
+    const tl = document.getElementById('wx-time-labels');
+    tl.innerHTML = '';
+    [0, 6, 12, 18, 24, 30, 36, 42].forEach(off => {
+      const sp = document.createElement('span');
+      if (times[off]) sp.textContent = String(new Date(times[off]).getHours()).padStart(2, '0');
+      tl.appendChild(sp);
+    });
+  }
+
+  const wDays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+  const wMin = Math.min(...d.daily.temperature_2m_min);
+  const wMax = Math.max(...d.daily.temperature_2m_max);
+  const wSpan = wMax - wMin || 1;
+  const weekBarColor = settings.weather.accentize.weekBars ? settings.ui.accent : 'rgba(255,255,255,.75)';
+
+  let wh = '';
+  for (let i = 1; i <= 5 && i < d.daily.time.length; i++){
+    const wd = wDays[new Date(d.daily.time[i]).getDay()];
+    const ci = WX_CODES[d.daily.weathercode[i]] || ['—', 'cloud'];
+    const mn = Math.round(d.daily.temperature_2m_min[i]);
+    const mx = Math.round(d.daily.temperature_2m_max[i]);
+    const left = ((mn - wMin) / wSpan * 100).toFixed(1);
+    const bw = ((mx - mn) / wSpan * 100).toFixed(1);
+
+    wh += `<div class="wx-week-row"><span class="wx-wday">${wd}</span><span class="wx-wico">${wxIcon(ci[1], 20, settings.weather.accentize.icon ? settings.ui.accent : '#fff')}</span><span class="wx-mn">${mn}°</span><span class="wx-barbox"><span class="wx-bar" style="margin-left:${left}%;width:${bw}%;background:${weekBarColor}"></span></span><span class="wx-mx">${mx}°</span></div>`;
+  }
+  document.getElementById('wx-week').innerHTML = wh;
+}
+
+function renderWeatherFromCache(){
+  if (!weatherCache) return;
+  renderWeatherData(weatherCache);
+}
+
+function fetchWeather(){
+  const { lat, lon } = settings.weather;
+
+  document.getElementById('wx-city').textContent = 'Загрузка...';
+  document.getElementById('wx-temp').textContent = '--°';
+
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,precipitation_probability,weathercode&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto`)
+    .then(r => r.json())
+    .then(d => renderWeatherData(d))
+    .catch(() => {
+      document.getElementById('wx-city').textContent = 'Ошибка сети';
+      document.getElementById('wx-desc').textContent = 'Проверьте подключение';
+    });
+}
+
+document.getElementById('s-wx-apply').addEventListener('click', () => {
+  const lat = parseFloat(document.getElementById('s-wx-lat').value);
+  const lon = parseFloat(document.getElementById('s-wx-lon').value);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+  settings.weather.lat = lat;
+  settings.weather.lon = lon;
+  saveSettings();
+
+  document.getElementById('s-wx-city-display').textContent = 'Определение...';
+  getCityName(lat, lon, city => {
+    settings.weather.city = city;
+    saveSettings();
+    document.getElementById('s-wx-city-display').textContent = city;
+    fetchWeather();
+  });
+});
+
+bindCheckbox('s-wx-acc-city', settings.weather.accentize, 'city', renderWeatherFromCache);
+bindCheckbox('s-wx-acc-desc', settings.weather.accentize, 'desc', renderWeatherFromCache);
+bindCheckbox('s-wx-acc-temp', settings.weather.accentize, 'temp', renderWeatherFromCache);
+bindCheckbox('s-wx-acc-range', settings.weather.accentize, 'range', renderWeatherFromCache);
+bindCheckbox('s-wx-acc-icon', settings.weather.accentize, 'icon', renderWeatherFromCache);
+bindCheckbox('s-wx-acc-chart-temp', settings.weather.accentize, 'chartTemp', renderWeatherFromCache);
+bindCheckbox('s-wx-acc-chart-precip', settings.weather.accentize, 'chartPrecip', renderWeatherFromCache);
+bindCheckbox('s-wx-acc-week-bars', settings.weather.accentize, 'weekBars', renderWeatherFromCache);
+
+/* =========================================
+   Видимость виджетов
+   ========================================= */
+function applyWidgetVisibility(){
+  document.getElementById('clock-widget').classList.toggle('hidden', !settings.widgets.clock);
+  document.getElementById('weather-widget').classList.toggle('hidden', !settings.widgets.weather);
+  document.getElementById('password-widget').classList.toggle('hidden', !settings.widgets.password);
+  document.getElementById('links-widget').classList.toggle('hidden', !settings.widgets.links);
+}
+
+bindToggle('s-show-clock', settings.widgets, 'clock', applyWidgetVisibility);
+bindToggle('s-show-weather', settings.widgets, 'weather', applyWidgetVisibility);
+bindToggle('s-show-password', settings.widgets, 'password', applyWidgetVisibility);
+bindToggle('s-show-links', settings.widgets, 'links', applyWidgetVisibility);
+
+/* =========================================
+   Виджет ссылок
+   ========================================= */
+function applyLinksLayoutCSS(){
+  const grid = document.getElementById('links-grid');
+  const widget = document.getElementById('links-widget');
+  const cols = clamp(settings.links.layout.columns || 3, 1, 8);
+  const itemWidth = clamp(settings.links.layout.itemWidth || 96, 70, 220);
+  const itemHeight = clamp(settings.links.layout.itemHeight || 78, 42, 160);
+
+  grid.style.setProperty('--links-cols', cols);
+  grid.style.setProperty('--links-item-w', itemWidth + 'px');
+  grid.style.setProperty('--links-item-h', itemHeight + 'px');
+
+  const gap = 10;
+  const contentWidth = cols * itemWidth + (cols - 1) * gap;
+  widget.style.width = (contentWidth + 36) + 'px';
+}
+
+function renderLinksWidget(){
+  const grid = document.getElementById('links-grid');
+  const links = settings.links.items || [];
+
+  applyLinksLayoutCSS();
+
+  if (!links.length){
+    grid.classList.remove('reorder-mode');
+    grid.innerHTML = `<div class="links-empty">Добавьте кнопки в настройках</div>`;
+    return;
+  }
+
+  grid.innerHTML = links.map((link, i) => `
+    <a
+      class="link-tile"
+      href="${escapeHTML(normalizeUrl(link.url))}"
+      target="_blank"
+      rel="noopener noreferrer"
+      draggable="true"
+      data-index="${i}"
+      title="${escapeHTML(link.title || link.url)}"
+    >${escapeHTML(link.title || link.url)}</a>
+  `).join('');
+
+  initLinksWidgetDnD();
+}
+
+function renderLinksSettingsList(){
+  const list = document.getElementById('s-links-list');
+  const links = settings.links.items || [];
+
+  if (!links.length){
+    list.innerHTML = `<div class="links-empty">Список кнопок пуст</div>`;
+    return;
+  }
+
+  list.innerHTML = links.map((link, i) => `
+    <div class="s-link-item">
+      <input class="s-input wide js-link-title" data-index="${i}" type="text" value="${escapeHTML(link.title)}" placeholder="Название">
+      <input class="s-input wide js-link-url" data-index="${i}" type="text" value="${escapeHTML(link.url)}" placeholder="Ссылка">
+      <button class="s-btn secondary js-link-del" data-index="${i}" type="button">×</button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.js-link-title').forEach(input => {
+    input.addEventListener('input', function(){
+      const i = +this.dataset.index;
+      settings.links.items[i].title = this.value;
+      saveSettings();
+      renderLinksWidget();
+    });
+  });
+
+  list.querySelectorAll('.js-link-url').forEach(input => {
+    input.addEventListener('input', function(){
+      const i = +this.dataset.index;
+      settings.links.items[i].url = this.value;
+      saveSettings();
+      renderLinksWidget();
+    });
+  });
+
+  list.querySelectorAll('.js-link-del').forEach(btn => {
+    btn.addEventListener('click', function(){
+      const i = +this.dataset.index;
+      settings.links.items.splice(i, 1);
+      saveSettings();
+      renderLinksSettingsList();
+      renderLinksWidget();
+    });
+  });
+}
+
+function initLinksWidgetDnD(){
+  const grid = document.getElementById('links-grid');
+  const tiles = [...grid.querySelectorAll('.link-tile')];
+  if (!tiles.length) return;
+
+  tiles.forEach(tile => {
+    tile.addEventListener('dragstart', e => {
+      linkDragIndex = +tile.dataset.index;
+      grid.classList.add('reorder-mode');
+      tile.classList.add('dragging-link');
+      if (e.dataTransfer){
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', tile.dataset.index); } catch {}
+      }
+    });
+
+    tile.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (linkDragIndex === null) return;
+      tiles.forEach(t => t.classList.remove('drop-target'));
+      const targetIndex = +tile.dataset.index;
+      if (targetIndex !== linkDragIndex) tile.classList.add('drop-target');
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    });
+
+    tile.addEventListener('dragleave', () => {
+      tile.classList.remove('drop-target');
+    });
+
+    tile.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetIndex = +tile.dataset.index;
+      if (linkDragIndex === null || targetIndex === linkDragIndex) return;
+      swapArrayItems(settings.links.items, linkDragIndex, targetIndex);
+      saveSettings();
+      renderLinksWidget();
+      renderLinksSettingsList();
+    });
+
+    tile.addEventListener('dragend', () => {
+      linkDragIndex = null;
+      grid.classList.remove('reorder-mode');
+      grid.querySelectorAll('.drop-target,.dragging-link').forEach(el => {
+        el.classList.remove('drop-target', 'dragging-link');
+      });
+    });
+  });
+}
+
+const sLinksColumns = document.getElementById('s-links-columns');
+const sLinksColumnsVal = document.getElementById('s-links-columns-val');
+const sLinksItemWidth = document.getElementById('s-links-item-width');
+const sLinksItemWidthVal = document.getElementById('s-links-item-width-val');
+const sLinksItemHeight = document.getElementById('s-links-item-height');
+const sLinksItemHeightVal = document.getElementById('s-links-item-height-val');
+
+sLinksColumns.addEventListener('input', () => {
+  settings.links.layout.columns = +sLinksColumns.value;
+  sLinksColumnsVal.textContent = sLinksColumns.value;
+  saveSettings();
+  renderLinksWidget();
+});
+
+sLinksItemWidth.addEventListener('input', () => {
+  settings.links.layout.itemWidth = +sLinksItemWidth.value;
+  sLinksItemWidthVal.textContent = sLinksItemWidth.value;
+  saveSettings();
+  renderLinksWidget();
+});
+
+sLinksItemHeight.addEventListener('input', () => {
+  settings.links.layout.itemHeight = +sLinksItemHeight.value;
+  sLinksItemHeightVal.textContent = sLinksItemHeight.value;
+  saveSettings();
+  renderLinksWidget();
+});
+
+document.getElementById('s-link-add').addEventListener('click', () => {
+  const titleEl = document.getElementById('s-link-title');
+  const urlEl = document.getElementById('s-link-url');
+  const title = titleEl.value.trim();
+  const url = urlEl.value.trim();
+
+  if (!title || !url) return;
+
+  settings.links.items.push({ title, url });
+  saveSettings();
+  titleEl.value = '';
+  urlEl.value = '';
+
+  renderLinksSettingsList();
+  renderLinksWidget();
+});
+
+/* =========================================
+   Генератор паролей
+   ========================================= */
+(function(){
+  const CHARS = {
+    lower: 'abcdefghijklmnopqrstuvwxyz',
+    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    nums: '0123456789',
+    syms: '!@#$%^&*()_+[]{}|;:,.<>?'
+  };
+
+  const output = document.getElementById('pg-output');
+  const btnsEl = document.getElementById('pg-btns');
+  let pwdLen = +(btnsEl.querySelector('button.active')?.dataset.v || 8);
+
+  let mouseSeed = 0;
+  let lastP = null;
+  let lastT = null;
+
+  function gen(){
+    let cs = '';
+    if (document.getElementById('pg-lower').checked) cs += CHARS.lower;
+    if (document.getElementById('pg-upper').checked) cs += CHARS.upper;
+    if (document.getElementById('pg-nums').checked) cs += CHARS.nums;
+    if (document.getElementById('pg-syms').checked) cs += CHARS.syms;
+
+    if (!cs){
+      output.value = '';
+      output.placeholder = 'Выберите хотя бы один набор';
+      return;
+    }
+
+    output.placeholder = 'Нажмите, чтобы скопировать';
+
+    const arr = new Uint32Array(pwdLen);
+    crypto.getRandomValues(arr);
+
+    let pwd = '';
+    for (let i = 0; i < pwdLen; i++){
+      const idx = ((arr[i] ^ mouseSeed ^ (i * 2654435761)) >>> 0) % cs.length;
+      pwd += cs[idx];
+    }
+    output.value = pwd;
+  }
+
+  btnsEl.addEventListener('click', e => {
+    if (e.target.tagName !== 'BUTTON') return;
+    btnsEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    pwdLen = +e.target.dataset.v;
+    gen();
+  });
+
+  ['pg-lower', 'pg-upper', 'pg-nums', 'pg-syms'].forEach(id => {
+    document.getElementById(id).addEventListener('change', gen);
+  });
+
+  document.addEventListener('mousemove', e => {
+    const now = performance.now();
+
+    if (lastP && lastT){
+      const dx = e.clientX - lastP.x;
+      const dy = e.clientY - lastP.y;
+      const dt = Math.max(1, now - lastT);
+      const spd = Math.hypot(dx, dy) / dt;
+
+      mouseSeed ^= Math.floor((((e.clientX ^ e.clientY) << 5) + spd * 1e6)) & 0xffffffff;
+      mouseSeed = (mouseSeed ^ ((dx * 73856093) >>> 0) ^ ((dy * 19349663) >>> 0) ^ ((dt * 83492791) >>> 0)) >>> 0;
+    } else {
+      mouseSeed = ((e.clientX * 73856093) ^ (e.clientY * 19349663) ^ Date.now()) >>> 0;
+    }
+
+    lastP = { x: e.clientX, y: e.clientY };
+    lastT = now;
+    gen();
+  });
+
+  output.addEventListener('click', async () => {
+    if (!output.value) return;
+    try{
+      if (navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(output.value);
+      } else {
+        output.select();
+        document.execCommand('copy');
+      }
+      output.classList.add('copied');
+      setTimeout(() => output.classList.remove('copied'), 400);
+    } catch {
+      output.select();
+    }
+  });
+
+  gen();
+})();
+
+/* =========================================
+   Позиции и перетаскивание виджетов
+   ========================================= */
+const dragGrid = document.getElementById('drag-grid');
+
+function widgetBounds(widget){
+  return {
+    maxX: Math.max(0, window.innerWidth - widget.offsetWidth),
+    maxY: Math.max(0, window.innerHeight - widget.offsetHeight)
+  };
+}
+function clampWidgetPosition(widget, x, y){
+  const b = widgetBounds(widget);
+  return {
+    x: clamp(x, 0, b.maxX),
+    y: clamp(y, 0, b.maxY)
+  };
+}
+function snapPointToGridByCenter(x, y, width, height){
+  const gs = settings.ui.gridSize || 96;
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  const snappedCenterX = Math.round(centerX / gs) * gs;
+  const snappedCenterY = Math.round(centerY / gs) * gs;
+  return {
+    x: snappedCenterX - width / 2,
+    y: snappedCenterY - height / 2
+  };
+}
+function applyWidgetPositionRaw(widget, x, y){
+  const clamped = clampWidgetPosition(widget, x, y);
+  widget.style.left = Math.round(clamped.x) + 'px';
+  widget.style.top = Math.round(clamped.y) + 'px';
+}
+function applyWidgetPosition(widget, x, y, snap = true){
+  let nx = x;
+  let ny = y;
+
+  if (snap){
+    const snapped = snapPointToGridByCenter(nx, ny, widget.offsetWidth, widget.offsetHeight);
+    nx = snapped.x;
+    ny = snapped.y;
+  }
+
+  applyWidgetPositionRaw(widget, nx, ny);
+}
+function saveWidgetPosition(widget){
+  const id = widget.dataset.widgetId;
+  settings.positions[id] = {
+    x: parseFloat(widget.style.left) || 0,
+    y: parseFloat(widget.style.top) || 0,
+    mode: 'absolute'
+  };
+  saveSettings();
+}
+function getDefaultPosition(widget, pos){
+  const ww = window.innerWidth;
+  const wh = window.innerHeight;
+  const w = widget.offsetWidth;
+  const h = widget.offsetHeight;
+
+  if (!pos || pos.mode === 'top-center'){
+    return {
+      x: Math.round((ww - w) / 2),
+      y: typeof pos?.y === 'number' ? pos.y : 48
+    };
+  }
+
+  if (pos.mode === 'center-offset'){
+    return {
+      x: Math.round((ww - w) / 2 + (pos.x || 0)),
+      y: Math.round((wh - h) / 2 + (pos.y || 0))
+    };
+  }
+
+  return {
+    x: pos.x || 0,
+    y: pos.y || 0
+  };
+}
+function applyStoredPositions(){
+  document.querySelectorAll('.widget-base').forEach(widget => {
+    const wasHidden = widget.classList.contains('hidden');
+    if (wasHidden) widget.classList.remove('hidden');
+
+    const id = widget.dataset.widgetId;
+    const pos = settings.positions[id];
+    const resolved = getDefaultPosition(widget, pos);
+
+    if (pos && pos.mode === 'absolute'){
+      applyWidgetPositionRaw(widget, resolved.x, resolved.y);
+    } else {
+      applyWidgetPosition(widget, resolved.x, resolved.y, true);
+    }
+
+    if (wasHidden) widget.classList.add('hidden');
+  });
+}
+function snapAllWidgetsToGrid(){
+  document.querySelectorAll('.widget-base').forEach(widget => {
+    if (widget.classList.contains('hidden')) return;
+    const x = parseFloat(widget.style.left) || widget.offsetLeft || 0;
+    const y = parseFloat(widget.style.top) || widget.offsetTop || 0;
+    applyWidgetPosition(widget, x, y, true);
+    saveWidgetPosition(widget);
+  });
+}
+function resetWidgetPositions(){
+  settings.positions = deepClone(DEFAULTS.positions);
+  saveSettings();
+  requestAnimationFrame(() => {
+    applyStoredPositions();
+  });
+}
+
+document.getElementById('s-reset-positions').addEventListener('click', resetWidgetPositions);
+
+function makeWidgetDraggable(widget){
+  let dragging = false;
+  let startX = 0;
+  let startY = 0;
+  let baseX = 0;
+  let baseY = 0;
+  let moved = false;
+
+  const interactiveSelector = 'button,input,textarea,select,a,label';
+
+  widget.addEventListener('pointerdown', e => {
+    if (e.target.closest(interactiveSelector)) return;
+    if (widget.classList.contains('hidden')) return;
+
+    dragging = true;
+    moved = false;
+    widget.classList.add('dragging');
+    dragGrid.classList.add('visible');
+
+    startX = e.clientX;
+    startY = e.clientY;
+    baseX = parseFloat(widget.style.left) || widget.offsetLeft || 0;
+    baseY = parseFloat(widget.style.top) || widget.offsetTop || 0;
+
+    widget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  widget.addEventListener('pointermove', e => {
+    if (!dragging) return;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
+
+    const nextX = baseX + dx;
+    const nextY = baseY + dy;
+
+    /* Во время движения ставим позицию напрямую без снапа,
+       чтобы виджет не "плавал" под курсором */
+    applyWidgetPositionRaw(widget, nextX, nextY);
+  });
+
+  function endDrag(){
+    if (!dragging) return;
+    dragging = false;
+    widget.classList.remove('dragging');
+    dragGrid.classList.remove('visible');
+
+    if (moved){
+      const x = parseFloat(widget.style.left) || 0;
+      const y = parseFloat(widget.style.top) || 0;
+      applyWidgetPosition(widget, x, y, true);
+      saveWidgetPosition(widget);
+    }
+  }
+
+  widget.addEventListener('pointerup', endDrag);
+  widget.addEventListener('pointercancel', endDrag);
+}
+
+document.querySelectorAll('.widget-base').forEach(makeWidgetDraggable);
+
+/* =========================================
+   Плавный старт
+   ========================================= */
+function startBootAnimation(){
+  if (bootStarted) return;
+  bootStarted = true;
+  applyEnterTiming(true);
+}
+
+/* =========================================
+   Инициализация
+   ========================================= */
+function init(){
+  applyAppTheme();
+  applyClockStyle();
+  renderLinksWidget();
+  renderLinksSettingsList();
+  syncSettingsUI();
+
+  requestAnimationFrame(() => {
+    applyStoredPositions();
+    applyWidgetVisibility();
+    fetchWeather();
+    startBootAnimation();
+  });
+
+  tickClock();
+}
+
+init();
+
+window.addEventListener('resize', () => {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.widget-base').forEach(widget => {
+      if (widget.classList.contains('hidden')) return;
+
+      const id = widget.dataset.widgetId;
+      const pos = settings.positions[id];
+
+      if (pos && pos.mode === 'absolute'){
+        applyWidgetPositionRaw(widget, pos.x, pos.y);
+        saveWidgetPosition(widget);
+      } else {
+        const resolved = getDefaultPosition(widget, pos);
+        applyWidgetPosition(widget, resolved.x, resolved.y, true);
+      }
+    });
+
+    renderWeatherFromCache();
+    renderLinksWidget();
+  });
+});
+</script>
+</body>
+</html>
