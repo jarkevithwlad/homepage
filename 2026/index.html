@@ -1360,6 +1360,30 @@ let weatherCache = null;
 let linkDragIndex = null;
 let bootStarted = false;
 
+function getViewportKey(){
+  return `${window.innerWidth}x${window.innerHeight}`;
+}
+
+function getViewportPositions(){
+  if (!settings.positionsByViewport || typeof settings.positionsByViewport !== 'object') {
+    settings.positionsByViewport = {};
+  }
+
+  const key = getViewportKey();
+
+  if (!settings.positionsByViewport[key] || typeof settings.positionsByViewport[key] !== 'object') {
+    const seed =
+      settings.positions && typeof settings.positions === 'object'
+        ? settings.positions
+        : DEFAULTS.positions;
+
+    settings.positionsByViewport[key] = deepClone(seed);
+    saveSettings();
+  }
+
+  return settings.positionsByViewport[key];
+}
+
 /* =========================================
    Панель настроек
    ========================================= */
@@ -2300,11 +2324,14 @@ function applyWidgetPosition(widget, x, y, snap = true){
 }
 function saveWidgetPosition(widget){
   const id = widget.dataset.widgetId;
-  settings.positions[id] = {
+  const viewportPositions = getViewportPositions();
+
+  viewportPositions[id] = {
     x: parseFloat(widget.style.left) || 0,
     y: parseFloat(widget.style.top) || 0,
     mode: 'absolute'
   };
+
   saveSettings();
 }
 function getDefaultPosition(widget, pos){
@@ -2333,12 +2360,14 @@ function getDefaultPosition(widget, pos){
   };
 }
 function applyStoredPositions(){
+  const viewportPositions = getViewportPositions();
+
   document.querySelectorAll('.widget-base').forEach(widget => {
     const wasHidden = widget.classList.contains('hidden');
     if (wasHidden) widget.classList.remove('hidden');
 
     const id = widget.dataset.widgetId;
-    const pos = settings.positions[id];
+    const pos = viewportPositions[id] || DEFAULTS.positions[id];
     const resolved = getDefaultPosition(widget, pos);
 
     if (pos && pos.mode === 'absolute'){
@@ -2360,8 +2389,13 @@ function snapAllWidgetsToGrid(){
   });
 }
 function resetWidgetPositions(){
-  settings.positions = deepClone(DEFAULTS.positions);
+  if (!settings.positionsByViewport || typeof settings.positionsByViewport !== 'object') {
+    settings.positionsByViewport = {};
+  }
+
+  settings.positionsByViewport[getViewportKey()] = deepClone(DEFAULTS.positions);
   saveSettings();
+
   requestAnimationFrame(() => {
     applyStoredPositions();
   });
@@ -2466,11 +2500,13 @@ init();
 
 window.addEventListener('resize', () => {
   requestAnimationFrame(() => {
+    const viewportPositions = getViewportPositions();
+
     document.querySelectorAll('.widget-base').forEach(widget => {
       if (widget.classList.contains('hidden')) return;
 
       const id = widget.dataset.widgetId;
-      const pos = settings.positions[id];
+      const pos = viewportPositions[id] || DEFAULTS.positions[id];
 
       if (pos && pos.mode === 'absolute'){
         applyWidgetPositionRaw(widget, pos.x, pos.y);
